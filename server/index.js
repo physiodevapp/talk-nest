@@ -11,7 +11,13 @@ app.set('view engine', 'ejs')
 app.set('views', path.resolve(process.cwd(), 'client'))
 
 app.get('/', (req, res) => {
+  res.redirect('/lobby')
+})
+app.get('/lobby', (req, res) => {
   res.render('chat', { user: 'Physiodevapp' })
+})
+app.get('/access', (req, res) => {
+  res.render('access')
 })
 
 app.listen(port, () => {
