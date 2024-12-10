@@ -1,45 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/styles.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <title>Physiodevapp Chat</title>
 </head>
+
 <body class="bg-gray-100 font-sans h-screen">
-  <div class="max-w-md mx-auto bg-white shadow-lg overflow-hidden h-full">
+  <div class="max-w-md mx-auto bg-white shadow-lg overflow-hidden h-full chat">
     <!-- Header -->
-    <div class="bg-[#075e54] text-white p-4 flex items-center justify-between">
+    <header class="bg-[#075e54] text-white p-4 flex items-center justify-between">
       <div class="flex items-center space-x-2">
         <div class="rounded-full bg-gray-300 h-8 w-8"></div>
-        <h1 class="text-lg font-semibold"><%= user %></h1>
+        <h1 class="text-lg font-semibold">
+          <%= user %>
+        </h1>
       </div>
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v.01M12 12v.01M12 18v.01" />
       </svg>
 
-    </div>
+    </header>
 
     <!-- Chat Section -->
-    <div class="p-4 flex flex-col space-y-4 overflow-auto h-[calc(100%-8rem)]">
+    <main class="p-4 flex flex-col space-y-4 overflow-auto h-[calc(100%-8rem)]">
       <!-- Response -->
       <div class="flex flex-col space-y-2">
-        <div class="bg-gray-100 p-3 rounded-bl-lg rounded-br-lg rounded-tr-lg">
+        <div class="relative bg-gray-100 p-3 rounded-bl-lg rounded-br-lg rounded-tr-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 left-0 -translate-x-2" width="20" height="20" viewBox="0 0 20 20">
+            <path d="M20 20 L20 0 L0 0 Z" fill="#f3f4f6"></path>
+          </svg>
           <p class="text-gray-800">Hola, Jasmin 👋 Estás chateando con Endomoto. ¿En qué podemos ayudarte?</p>
         </div>
       </div>
 
       <!-- User Input -->
-      <div class="bg-[#d9ffdb] p-3 rounded-bl-lg rounded-br-lg rounded-tl-lg self-end">
+      <div class="relative bg-[#d9ffdb] p-3 rounded-bl-lg rounded-br-lg rounded-tl-lg self-end">
+        <svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 right-0 translate-x-2" width="20" height="20" viewBox="0 0 20 20">
+          <path d="M0 0 L0 20 L20 0 Z" fill="#d9ffdb"></path>
+        </svg>
         <p class="text-gray-800">Autorizarnos a contactarte</p>
       </div>
 
       <!-- Bot Response -->
-      <div class="bg-gray-100 p-3 rounded-bl-lg rounded-br-lg rounded-tr-lg self-start">
+      <div class="relative bg-gray-100 p-3 rounded-bl-lg rounded-br-lg rounded-tr-lg self-start">
+        <svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 left-0 -translate-x-2" width="20" height="20" viewBox="0 0 20 20">
+          <path d="M20 20 L20 0 L0 0 Z" fill="#f3f4f6"></path>
+        </svg>
         <p class="text-gray-800">Toca abajo para personalizar cómo prefieres recibir más información en WhatsApp.</p>
         <button class="bg-blue-500 text-white py-1 px-4 rounded-lg mt-2">Ir al sitio web</button>
       </div>
-    </div>
+    </main>
 
     <!-- Input Section -->
     <div class="bg-gray-200 p-3 flex items-center space-x-2">
@@ -53,4 +67,5 @@
     </div>
   </div>
 </body>
+
 </html>

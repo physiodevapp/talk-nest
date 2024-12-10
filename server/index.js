@@ -5,6 +5,8 @@ import { PORT } from '../config.js'
 const app = express()
 const port = PORT ?? 3000
 
+app.use(express.static(path.resolve(process.cwd(), 'public')))
+
 app.set('view engine', 'ejs')
 app.set('views', path.resolve(process.cwd(), 'client'))
 
