@@ -17,7 +17,7 @@ app.get('/lobby', (req, res) => {
   res.render('chat', { user: 'Physiodevapp' })
 })
 app.get('/access', (req, res) => {
-  res.render('access')
+  res.render('access', { formType: 'register' })
 })
 
 app.listen(port, () => {
