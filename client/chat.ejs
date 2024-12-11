@@ -59,9 +59,7 @@
       <div id="menu"
         class="hidden absolute right-6 top-[3em] w-48 bg-white rounded shadow-lg transition-transform duration-300 transform origin-top-right scale-95">
         <a href="/profile" class="block px-4 py-2 text-gray-700 rounded hover:bg-gray-100">Profile</a>
-        <!-- <a href="/logout" class="block px-4 py-2 text-gray-700 rounded hover:bg-gray-100">Logout</a> -->
         <form action="/logout" method="POST" class="block">
-          <!-- Asegúrate de incluir el token CSRF si usas un framework como Laravel -->
           <button type="submit" class="w-full text-left px-4 py-2 text-gray-700 rounded hover:bg-gray-100">
             Logout
           </button>
