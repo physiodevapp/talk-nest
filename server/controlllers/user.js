@@ -38,4 +38,14 @@ export class UserController {
       throw new Error('Error while trying to log in')
     }
   }
+
+  static logout = async (req, res) => {
+    res
+      .clearCookie('access_token', {
+        httpOnly: true,
+        secure: NODE_ENV === 'production',
+        sameSite: 'strict'
+      })
+      .redirect('/access')
+  }
 }
