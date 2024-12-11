@@ -1,4 +1,6 @@
 import mysql from 'mysql2/promise'
+import bcrypt from 'bcrypt'
+import { JWT_SALT } from '../../config.js'
 
 const DEFAULT_CONFIG = {
   host: 'localhost',
@@ -16,16 +18,18 @@ export class UserModel {
   static create = async ({ input }) => {
     const { username, email, password } = input
 
-    const [uuidResult] = await connection.query(`
-        SELECT UUID() uuid
-      `)
-    const [{ uuid }] = uuidResult
-
     try {
+      const [uuidResult] = await connection.query(`
+          SELECT UUID() uuid
+        `)
+      const [{ uuid }] = uuidResult
+
+      const passwordHashed = await bcrypt.hash(password, JWT_SALT)
+
       await connection.query(`
           INSERT INTO talkNest_users (id, username, email, password)
           VALUES (UUID_TO_BIN('${uuid}'), ?, ?, ?)
-        `, [username, email, password])
+        `, [username, email, passwordHashed])
     } catch (error) {
       console.log(error)
 
