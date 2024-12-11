@@ -27,7 +27,7 @@ chatRouter.post('/register', UserController.register)
 chatRouter.post('/login', UserController.login)
 chatRouter.post('/logout', UserController.logout)
 chatRouter.get('/access', (req, res) => {
-  const formType = req.query.formType ?? 'register'
+  const formType = req.query.formType ?? 'login'
 
   res.render('access', { formType })
 })
