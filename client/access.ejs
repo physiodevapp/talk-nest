@@ -19,16 +19,16 @@
 
     <!-- Form -->
     <% if (formType === 'login') { %>
-    <form class="space-y-4">
+    <form class="space-y-4" method="POST" action="/login">
       <!-- Username -->
       <div class="relative">
-        <input type="text" placeholder="Username"
+        <input type="text" name="username" placeholder="Username"
           class="w-full px-4 py-3 text-sm text-gray-700 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-[#0a7b67] shadow" />
       </div>
 
       <!-- Password -->
       <div>
-        <input type="password" placeholder="Password"
+        <input type="password" name="password" placeholder="Password"
           class="w-full px-4 py-3 text-sm text-gray-700 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-[#0a7b67] shadow" />
       </div>
 

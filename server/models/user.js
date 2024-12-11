@@ -36,4 +36,32 @@ export class UserModel {
       throw new Error('Error while trying to create the user')
     }
   }
+
+  static getByUsername = async ({ input }) => {
+    const { username, password } = input
+
+    try {
+      const [userResult] = await connection.query(`
+          SELECT username, password, BIN_TO_UUID(id) AS id
+          FROM talkNest_users
+          WHERE username = ?;
+        `, [username])
+      const [user] = userResult
+
+      if (!user) throw new Error('Invalid credentials')
+
+      const isValid = await bcrypt.compare(password, user.password)
+
+      if (!isValid) throw new Error('Invalid credentials')
+
+      return {
+        username: user.username,
+        id: user.id
+      }
+    } catch (error) {
+      console.log(error)
+
+      throw new Error('Error while trying to check the credentials')
+    }
+  }
 }
