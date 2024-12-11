@@ -13,5 +13,7 @@ chatRouter.get('/lobby', (req, res) => {
 
 chatRouter.post('/register', UserController.register)
 chatRouter.get('/access', (req, res) => {
-  res.render('access', { formType: 'register' })
+  const formType = req.query.formType || 'register'
+
+  res.render('access', { formType })
 })

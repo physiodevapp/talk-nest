@@ -72,7 +72,7 @@
       <!-- Divider -->
       <div class="flex items-center mt-6">
         <hr class="flex-grow border-gray-300">
-        <span class="mx-4 text-gray-400 text-sm">or connect with</span>
+        <span class="mx-4 text-gray-400 text-sm">or sign up with</span>
         <hr class="flex-grow border-gray-300">
       </div>
 
@@ -83,6 +83,12 @@
           <img src="/images/chrome.png" alt="" srcset="" class="max-w-full h-auto max-h-[1.6em]">
         </button>
       </div>
+
+      <% if(formType === 'login') { %>
+        <p class="flex items-center mt-6 justify-center text-[#8b45f7]"><a class="font-bold" href="/access?formType=register">Create an account here</a></p>
+      <% } else { %>
+        <p class="flex items-center mt-6 justify-center text-[#8b45f7]">Have an account? <span class="ml-2"></span><a class="font-bold" href="/access?formType=login">Log in here</a></p>
+      <% } %>
     <% } %>
 
     <% if (formType === 'forgot') { %>
