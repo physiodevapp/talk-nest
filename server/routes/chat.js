@@ -10,19 +10,22 @@ chatRouter.get('/', (req, res) => {
 })
 
 chatRouter.get('/lobby', (req, res) => {
-  const token = req.cookies.access_token
+  try {
+    const token = req.cookies.access_token
 
-  if (!token) return res.status(401).redirect('/access')
+    if (!token) return res.status(401).redirect('/access')
 
-  const user = jwt.verify(token, JWT_SECRET_KEY)
+    const user = jwt.verify(token, JWT_SECRET_KEY)
 
-  if (!user) return res.status(401).redirect('/access')
-
-  res.status(200).render('chat', { user: user.username })
+    res.status(200).render('chat', { user: user.username })
+  } catch (error) {
+    res.status(401).redirect('/access')
+  }
 })
 
 chatRouter.post('/register', UserController.register)
 chatRouter.post('/login', UserController.login)
+chatRouter.post('/logout', UserController.logout)
 chatRouter.get('/access', (req, res) => {
   const formType = req.query.formType ?? 'register'
 

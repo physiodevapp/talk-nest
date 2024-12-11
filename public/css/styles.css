@@ -1,7 +1,17 @@
 .chat {
   background-image: url(/images/background_1.jpg);
 
+  header {
+    #menu {
+      z-index: 100;
+      -webkit-box-shadow: -5px 9px 14px -3px rgba(0, 0, 0, 0.19);
+      -moz-box-shadow: -5px 9px 14px -3px rgba(0, 0, 0, 0.19);
+      box-shadow: -5px 9px 14px -3px rgba(0, 0, 0, 0.19);
+    }
+  }
+
   main {
     backdrop-filter: grayscale(1);
+
   }
 }
