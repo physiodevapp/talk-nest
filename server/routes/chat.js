@@ -11,7 +11,7 @@ chatRouter.get('/lobby', (req, res) => {
   res.render('chat', { user: 'PhysiodevchatRouter' })
 })
 
-chatRouter.post('/access', UserController.register)
+chatRouter.post('/register', UserController.register)
 chatRouter.get('/access', (req, res) => {
   res.render('access', { formType: 'register' })
 })

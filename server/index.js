@@ -15,6 +15,10 @@ app.set('views', path.resolve(process.cwd(), 'client'))
 
 app.use('', chatRouter)
 
+app.use((req, res, next) => {
+  res.status(404).send('Client error')
+})
+
 app.listen(port, () => {
   console.log(`Server is listening at: http://localhost:${port}`)
 })
