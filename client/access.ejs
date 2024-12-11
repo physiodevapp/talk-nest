@@ -4,14 +4,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/styles.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <title>Physiodevapp Access</title>
 </head>
 
-<body class="bg-gradient-to-b from-[#075e54] to-[#0a7b67] min-h-screen flex items-center justify-center">
-  <div class="bg-white h-screen w-full rounded-none flex flex-col justify-center md:max-w-sm shadow-lg p-8">
+<body class="access min-h-screen flex items-center justify-center">
+  <main class="backdrop-blur-sm border-4 border-dashed border-white rounded-[2em] flex flex-col justify-center md:max-w-sm shadow-lg p-8">
     <!-- Title -->
-    <h2 class="text-center text-2xl font-semibold text-gray-700 mb-6">
+    <h2 class="text-center text-[2.4em] text-white mb-6">
       <% if (formType === 'login') { %> Login <% } %>
       <% if (formType === 'register') { %> Register <% } %>
       <% if (formType === 'forgot') { %> Forgot Password <% } %>
@@ -71,23 +72,23 @@
     <% if (formType !== 'forgot') { %>
       <!-- Divider -->
       <div class="flex items-center mt-6">
-        <hr class="flex-grow border-gray-300">
-        <span class="mx-4 text-gray-400 text-sm">or sign up with</span>
-        <hr class="flex-grow border-gray-300">
+        <hr class="flex-grow border-white">
+        <span class="mx-4 text-white text-[1.8em] semibold">or sign up with</span>
+        <hr class="flex-grow border-white">
       </div>
 
       <!-- Social Login Buttons -->
       <div class="flex space-x-4 mt-4">
-        <button class="flex-grow bg-blue-600 text-white py-3 rounded-full shadow hover:opacity-90 transition flex justify-center items-center gap-4">
+        <button class="flex-grow bg-blue-600 text-white py-3 rounded-full shadow hover:opacity-90 transition flex justify-center items-center gap-4 font-semibold text-[1.4em]">
           Google
           <img src="/images/chrome.png" alt="" srcset="" class="max-w-full h-auto max-h-[1.6em]">
         </button>
       </div>
 
       <% if(formType === 'login') { %>
-        <p class="flex items-center mt-6 justify-center text-[#8b45f7]"><a class="font-bold" href="/access?formType=register">Create an account here</a></p>
+        <p class="flex items-center mt-6 justify-center text-white"><a class="font-bold text-[1.4em]" href="/access?formType=register">Create an account here</a></p>
       <% } else { %>
-        <p class="flex items-center mt-6 justify-center text-[#8b45f7]">Have an account? <span class="ml-2"></span><a class="font-bold" href="/access?formType=login">Log in here</a></p>
+        <p class="flex items-center mt-6 justify-center text-white text-[1.4em]">Have an account? <span class="ml-2"></span><a class="font-bold" href="/access?formType=login">Log in here</a></p>
       <% } %>
     <% } %>
 
