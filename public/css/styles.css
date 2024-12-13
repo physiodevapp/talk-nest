@@ -13,6 +13,9 @@
   main {
     backdrop-filter: grayscale(1);
 
+    .gap {
+      margin-top: 1.2em;
+    }
   }
 }
 
@@ -20,14 +23,13 @@
   background-image: url(/images/background_1.jpg) !important;
   background-size: 173%;
 
-  main {
-    input {
-      font-size: 1.4em;
-      text-align: center;
-    }
-
-    button {
-      font-size: 1.4em;
-    }
+  main input {
+    font-size: 1.4em;
+    text-align: center;
   }
+
+  main button {
+    font-size: 1.4em;
+  }
+
 }

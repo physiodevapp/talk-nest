@@ -39,16 +39,72 @@
       });
     });
   </script>
+  <script>
+    const currentUser = JSON.parse('<%- JSON.stringify(currentUser) %>');
+  </script>
+  <script type="module">
+    import { io } from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
+
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("input");
+    const messages = document.getElementById("messages");
+
+    const socket = io({
+      auth: {
+        serverOffset: 0,
+        user: currentUser
+      }
+    });
+
+    socket.on("chat message", (message, serverOffset, user, isSameSender) => {
+      let item;
+
+      if (user.id === currentUser.id) {
+        item = `
+          <li class="relative bg-[#d9ffdb] p-3 rounded-bl-md rounded-br-md rounded-tl-md self-end m-[0.2em_0_0.2em_4em]${!isSameSender ? ' gap' : ''}">
+            <svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 right-0 translate-x-2" width="20" height="20"
+              viewBox="0 0 20 20">
+              <path d="M0 0 L0 20 L20 0 Z" fill="#d9ffdb"></path>
+            </svg>
+            <p class="text-gray-800">${ message }</p>
+          </li>
+        `
+      } else {
+        item = `
+          <li class="relative bg-[#f3f4f6] p-3 rounded-bl-md rounded-br-md rounded-tr-md m-[0.2em_4em_0.2em_0em]${!isSameSender ? ' gap' : ''}"}">
+            <svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 left-0 -translate-x-2" width="20" height="20"
+              viewBox="0 0 20 20">
+              <path d="M20 20 L20 0 L0 0 Z" fill="#f3f4f6"></path>
+            </svg>
+            <p class="text-gray-800">${ message }</p>
+          </li>
+        `
+      }
+      messages.insertAdjacentHTML("beforeend", item);
+      socket.auth.serverOffset = serverOffset;
+      messages.scrollTop = messages.scrollHeight;
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      if (input.value) {
+        socket.emit("chat message", input.value);
+
+        input.value = '';
+      }
+    });
+  </script>
 </head>
 
 <body class="bg-gray-100 font-sans h-screen">
-  <div class="chat max-w-md mx-auto bg-white shadow-lg overflow-hidden h-full">
+  <div class="chat max-w-md mx-auto bg-white shadow-lg h-full">
     <!-- Header -->
     <header class="relative bg-[#8b45f7] text-white p-4 flex items-center justify-between">
       <div class="flex items-center space-x-2">
         <div class="rounded-full bg-gray-300 h-8 w-8"></div>
         <h1 class="text-lg font-semibold">
-          <%= user %>
+          <%= currentUser.username %>
         </h1>
       </div>
       <button id="menuButton">
@@ -68,48 +124,23 @@
     </header>
 
     <!-- Chat Section -->
-    <main class="p-4 flex flex-col space-y-4 overflow-auto h-[calc(100%-8rem)]">
-      <!-- Response -->
-      <div class="flex flex-col space-y-2">
-        <div class="relative bg-gray-100 p-3 rounded-bl-lg rounded-br-lg rounded-tr-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 left-0 -translate-x-2" width="20" height="20"
-            viewBox="0 0 20 20">
-            <path d="M20 20 L20 0 L0 0 Z" fill="#f3f4f6"></path>
-          </svg>
-          <p class="text-gray-800">Hola, Jasmin 👋 Estás chateando con Endomoto. ¿En qué podemos ayudarte?</p>
+    <main class="h-[calc(100%-4rem)]">
+      <form id="chat-form" class="px-4 pt-0 pb-[4em] flex flex-col space-y-4 overflow-y-auto h-full">
+        <ul id="messages" class="list-none m-0 pb-12 p-0 px-[0.6em] overflow-y-scroll h-full scroll-smooth"></ul>
+
+        <!-- Input Section -->
+        <div class="absolute bottom-0 w-full left-0 bg-gray-200 p-3 flex items-center space-x-2">
+          <input id="input" type="text" name="message" autocomplete="off" placeholder="Escribe un mensaje"
+            class="flex-1 p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#075e54]" />
+          <button type="submit" class="bg-[#8b45f7] text-white p-2 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
-      </div>
-
-      <!-- User Input -->
-      <div class="relative bg-[#d9ffdb] p-3 rounded-bl-lg rounded-br-lg rounded-tl-lg self-end">
-        <svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 right-0 translate-x-2" width="20" height="20"
-          viewBox="0 0 20 20">
-          <path d="M0 0 L0 20 L20 0 Z" fill="#d9ffdb"></path>
-        </svg>
-        <p class="text-gray-800">Autorizarnos a contactarte</p>
-      </div>
-
-      <!-- Bot Response -->
-      <div class="relative bg-gray-100 p-3 rounded-bl-lg rounded-br-lg rounded-tr-lg self-start">
-        <svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 left-0 -translate-x-2" width="20" height="20"
-          viewBox="0 0 20 20">
-          <path d="M20 20 L20 0 L0 0 Z" fill="#f3f4f6"></path>
-        </svg>
-        <p class="text-gray-800">Toca abajo para personalizar cómo prefieres recibir más información en WhatsApp.</p>
-        <button class="bg-blue-500 text-white py-1 px-4 rounded-lg mt-2">Ir al sitio web</button>
-      </div>
+      </form>
     </main>
-
-    <!-- Input Section -->
-    <div class="bg-gray-200 p-3 flex items-center space-x-2">
-      <input type="text" placeholder="Escribe un mensaje"
-        class="flex-1 p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#075e54]" />
-      <button class="bg-[#8b45f7] text-white p-2 rounded-full">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-    </div>
   </div>
 </body>
 

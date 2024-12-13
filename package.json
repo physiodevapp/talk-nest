@@ -17,6 +17,7 @@
     "express": "4.21.2",
     "jsonwebtoken": "9.0.2",
     "mysql2": "3.11.5",
+    "socket.io": "4.8.1",
     "standard": "17.1.2"
   },
   "eslintConfig": {

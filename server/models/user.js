@@ -31,13 +31,75 @@ export class UserModel {
           VALUES (UUID_TO_BIN('${uuid}'), ?, ?, ?)
         `, [username, email, passwordHashed])
     } catch (error) {
-      console.log(error)
+      console.error(error)
 
       throw new Error('Error while trying to create the user')
     }
   }
 
-  static getByUsername = async ({ input }) => {
+  static getById = async ({ id }) => {
+    if (!id) throw new Error('You must provide an id')
+
+    try {
+      const [results] = await connection.query(`
+        SELECT username, BIN_TO_UUID(id) AS id
+        FROM talknest_users
+        WHERE id = UUID_TO_BIN(?);
+        `, [id])
+
+      const [user] = results
+
+      return user
+    } catch (error) {
+      console.error(error)
+
+      throw new Error('Error while trying to get the user')
+    }
+  }
+
+  static getByUsername = async ({ username }) => {
+    if (!username) throw new Error('You must provide an username')
+
+    try {
+      const [results] = await connection.query(`
+        SELECT username, BIN_TO_UUID(id) AS id
+        FROM talknest_users
+        WHERE username = ?;
+        `, [username])
+
+      const [user] = results
+
+      return user
+    } catch (error) {
+      console.error(error)
+
+      throw new Error('Error while trying to get the user')
+    }
+  }
+
+  static getUsersByIds = async (ids) => {
+    if (!ids || ids.length === 0) {
+      throw new Error('You must provide at least one ID')
+    }
+
+    try {
+      const placeholders = ids.map(() => 'UUID_TO_BIN(?)').join(', ')
+      const [results] = await connection.query(
+        `
+        SELECT username, BIN_TO_UUID(id) AS id
+        FROM talknest_users
+        WHERE id IN (${placeholders});
+        `, ids
+      )
+
+      return results
+    } catch (error) {
+      console.error('Error while trying to get users by IDs:', error)
+      throw new Error('Error while trying to get users by IDs')
+    }
+  }
+
+  static isAuthorised = async ({ input }) => {
     const { username, password } = input
 
     try {
@@ -59,7 +121,7 @@ export class UserModel {
         id: user.id
       }
     } catch (error) {
-      console.log(error)
+      console.error(error)
 
       throw new Error('Error while trying to check the credentials')
     }
