@@ -15,7 +15,7 @@ export class UserController {
     const { username, password } = req.body
 
     try {
-      const user = await UserModel.getByUsername({
+      const user = await UserModel.isAuthorised({
         input: { username, password }
       })
 

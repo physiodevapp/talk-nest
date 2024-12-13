@@ -15,9 +15,9 @@ chatRouter.get('/lobby', (req, res) => {
 
     if (!token) return res.status(401).redirect('/access')
 
-    const user = jwt.verify(token, JWT_SECRET_KEY)
+    const { id, username } = jwt.verify(token, JWT_SECRET_KEY)
 
-    res.status(200).render('chat', { user: user.username })
+    res.status(200).render('chat', { currentUser: { id, username } })
   } catch (error) {
     res.status(401).redirect('/access')
   }
