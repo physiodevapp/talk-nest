@@ -33,8 +33,8 @@ io.engine.use(cookieParser())
 io.use(authenticateSocket)
 
 io.on('connection', async (socket) => {
-  console.log('An user has connected')
-  let firstMessage = true
+  const { username } = socket.user
+  console.log(`User ${username} has connected`)
 
   socket.on('disconnect', () => {
     const { username } = socket.user
@@ -42,19 +42,19 @@ io.on('connection', async (socket) => {
   })
 
   socket.on('chat message', async (message) => {
+    console.log('chat message event from server')
     try {
       const { id, username } = validateUser(socket)
       const user = { id, username }
 
       const messageId = await MessageModel.add({ userId: user.id, message })
-      const isSameSender = (user.id === globalState.previousUserId)
+      const isSameSender = user.id === globalState.previousUserId
 
-      io.emit('chat message', message, messageId.toString(), user, isSameSender, firstMessage)
+      io.emit('chat message', message, messageId.toString(), user, isSameSender)
 
       globalState.previousUserId = user.id
-      firstMessage = false
     } catch (error) {
-      console.error(error)
+      console.error(error.message)
 
       socket.emit('auth_error', 'Session expired. Please, log in again.')
 
@@ -63,7 +63,6 @@ io.on('connection', async (socket) => {
   })
 
   if (!socket.recovered) {
-    console.log('socket.recovered ', socket.recovered)
     try {
       const messageId = socket.handshake.auth.serverOffset ?? 0
       const results = await MessageModel.getNewerMessages({ id: messageId })
@@ -74,18 +73,16 @@ io.on('connection', async (socket) => {
       const users = await UserModel.getUsersByIds(userIds)
       const userMap = Object.fromEntries(users.map(user => [user.id, user]))
 
-      for (const { id: messageId, message, user_id: userId } of results) {
+      for (const [index, { id: messageId, message, user_id: userId }] of results.entries()) {
         const user = userMap[userId] || null
 
-        const isSameSender = userId === globalState.previousUserId
+        const isFirstMessage = index === 0 || globalState.previousUserId === null
+        const isSameSender = !isFirstMessage && userId === globalState.previousUserId
 
-        socket.emit('chat message', message, messageId, user, isSameSender, firstMessage)
+        socket.emit('chat message', message, messageId, user, isSameSender)
 
         globalState.previousUserId = userId
-        firstMessage = false
       }
-
-      firstMessage = true
     } catch (error) {
       console.error(error)
     }
