@@ -49,55 +49,111 @@
     const input = document.getElementById("input");
     const messages = document.getElementById("messages");
 
-    const socket = io({
-      auth: {
-        serverOffset: 0,
-        user: currentUser
+    const connectToSocket = () => {
+      const socket = io({
+        auth: {
+          token: "USE_COOKIE",
+          serverOffset: 0,
+        }
+      });
+
+      if (socket) {
+        socket.off("chat message");
+        socket.off("connect_error");
+        socket.off("auth_error");
+
+        messages.replaceChildren();
       }
-    });
 
-    socket.on("chat message", (message, serverOffset, user, isSameSender) => {
-      let item;
 
-      if (user.id === currentUser.id) {
-        item = `
+      socket.on("chat message", (message, serverOffset, user, isSameSender, addGap) => {
+        let item;
+
+        if (user.id === currentUser.id) {
+          item = `
           <li class="relative bg-[#d9ffdb] p-3 rounded-md self-end m-[0.2em_0_0.2em_4em]${!isSameSender ? ' gap' : ''}">
             ${!isSameSender ?
-            `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 right-0 translate-x-2" width="20" height="20"
+              `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 right-0 translate-x-2" width="20" height="20"
               viewBox="0 0 20 20">
               <path d="M0 0 L0 20 L20 0 Z" fill="#d9ffdb"></path>
             </svg>`
-            : ''}
+              : ''}
             <p class="text-gray-800">${message}</p>
           </li>
         `;
-      } else {
-        item = `
+        } else {
+          item = `
           <li class="relative bg-[#f3f4f6] p-3 rounded-md m-[0.2em_4em_0.2em_0em]${!isSameSender ? ' gap' : ''}"}">
             ${!isSameSender ?
-            `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 left-0 -translate-x-2" width="20" height="20"
+              `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 left-0 -translate-x-2" width="20" height="20"
               viewBox="0 0 20 20">
               <path d="M20 20 L20 0 L0 0 Z" fill="#f3f4f6"></path>
             </svg>`
-            : ''}
+              : ''}
             <p class="text-gray-800">${message}</p>
           </li>
         `;
+        }
+        messages.insertAdjacentHTML("beforeend", item);
+        socket.auth.serverOffset = serverOffset;
+        messages.scrollTop = messages.scrollHeight;
+      });
+
+      socket.on("connect_error", async (error) => {
+        if (error.message === 'Invalid token' || error.message === 'Token required') {
+          console.info('Trying to renew the token...');
+
+          await handleTokenRefresh();
+        }
+      });
+
+      socket.on("auth_error", async (error) => {
+        console.info('Trying to renew the token...');
+
+        await handleTokenRefresh();
+      });
+
+      form.onsubmit = (event) => {
+        event.preventDefault();
+
+        if (input.value) {
+          socket.emit("chat message", input.value);
+
+          input.value = '';
+        }
+      };
+    };
+
+    const handleTokenRefresh = async () => {
+      const refreshed = await refreshAccessToken();
+
+      if (refreshed) {
+        connectToSocket();
+      } else {
+        window.location.href = '/access';
       }
-      messages.insertAdjacentHTML("beforeend", item);
-      socket.auth.serverOffset = serverOffset;
-      messages.scrollTop = messages.scrollHeight;
-    });
+    };
 
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
+    const refreshAccessToken = async () => {
+      try {
+        const response = await fetch("/refresh", {
+          method: "POST",
+          credentials: "include",
+        });
 
-      if (input.value) {
-        socket.emit("chat message", input.value);
+        if (response.ok) {
+          return true;
+        } else {
+          return false;
+        }
+      } catch (error) {
+        console.error('Trying to renew the token failed');
 
-        input.value = '';
+        return false;
       }
-    });
+    };
+
+    connectToSocket();
   </script>
 </head>
 

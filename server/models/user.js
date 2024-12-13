@@ -99,7 +99,7 @@ export class UserModel {
     }
   }
 
-  static isAuthorised = async ({ input }) => {
+  static isValid = async ({ input }) => {
     const { username, password } = input
 
     try {

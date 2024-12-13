@@ -21,7 +21,7 @@
 
     <!-- Form -->
     <% if (formType === 'login') { %>
-    <form class="space-y-4" method="POST" action="/login">
+    <form class="space-y-4" action="/login" method="POST">
       <!-- Username -->
       <div class="relative">
         <input type="text" name="username" placeholder="Username"
@@ -39,6 +39,10 @@
         class="w-full bg-[#8b45f7] text-white font-semibold py-3 rounded-full shadow hover:opacity-90 transition">
         Login
       </button>
+
+      <% if (typeof error !== 'undefined') { %>
+        <p style="color: red;"><%= error %></p>
+      <% } %>
     </form>
     <% } %>
 
