@@ -61,24 +61,28 @@
 
       if (user.id === currentUser.id) {
         item = `
-          <li class="relative bg-[#d9ffdb] p-3 rounded-bl-md rounded-br-md rounded-tl-md self-end m-[0.2em_0_0.2em_4em]${!isSameSender ? ' gap' : ''}">
-            <svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 right-0 translate-x-2" width="20" height="20"
+          <li class="relative bg-[#d9ffdb] p-3 rounded-md self-end m-[0.2em_0_0.2em_4em]${!isSameSender ? ' gap' : ''}">
+            ${!isSameSender ?
+            `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 right-0 translate-x-2" width="20" height="20"
               viewBox="0 0 20 20">
               <path d="M0 0 L0 20 L20 0 Z" fill="#d9ffdb"></path>
-            </svg>
-            <p class="text-gray-800">${ message }</p>
+            </svg>`
+            : ''}
+            <p class="text-gray-800">${message}</p>
           </li>
-        `
+        `;
       } else {
         item = `
-          <li class="relative bg-[#f3f4f6] p-3 rounded-bl-md rounded-br-md rounded-tr-md m-[0.2em_4em_0.2em_0em]${!isSameSender ? ' gap' : ''}"}">
-            <svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 left-0 -translate-x-2" width="20" height="20"
+          <li class="relative bg-[#f3f4f6] p-3 rounded-md m-[0.2em_4em_0.2em_0em]${!isSameSender ? ' gap' : ''}"}">
+            ${!isSameSender ?
+            `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 left-0 -translate-x-2" width="20" height="20"
               viewBox="0 0 20 20">
               <path d="M20 20 L20 0 L0 0 Z" fill="#f3f4f6"></path>
-            </svg>
-            <p class="text-gray-800">${ message }</p>
+            </svg>`
+            : ''}
+            <p class="text-gray-800">${message}</p>
           </li>
-        `
+        `;
       }
       messages.insertAdjacentHTML("beforeend", item);
       socket.auth.serverOffset = serverOffset;
