@@ -45,9 +45,51 @@
   <script type="module">
     import { io } from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
 
+    let formSubmitHandler;
     const form = document.getElementById("chat-form");
     const input = document.getElementById("input");
     const messages = document.getElementById("messages");
+
+    const handleFormSubmit = (socket) => (event) => {
+      event.preventDefault();
+
+      if (input.value) {
+        const message = input.value;
+
+        socket.emit("chat message", input.value);
+
+        input.value = '';
+      }
+    };
+
+    const handleTokenRefresh = async () => {
+      const refreshed = await refreshAccessToken();
+
+      if (refreshed) {
+        connectToSocket();
+      } else {
+        window.location.href = '/access';
+      }
+    };
+
+    const refreshAccessToken = async () => {
+      try {
+        const response = await fetch("/refresh", {
+          method: "POST",
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          return true;
+        } else {
+          return false;
+        }
+      } catch (error) {
+        console.error('Trying to renew the token failed');
+
+        return false;
+      }
+    };
 
     const connectToSocket = () => {
       const socket = io({
@@ -62,11 +104,17 @@
         socket.off("connect_error");
         socket.off("auth_error");
 
+        if (formSubmitHandler) {
+          form.removeEventListener("submit", formSubmitHandler);
+        }
+        formSubmitHandler = handleFormSubmit(socket);
+        form.addEventListener("submit", formSubmitHandler);
+
         messages.replaceChildren();
       }
 
 
-      socket.on("chat message", (message, serverOffset, user, isSameSender, addGap) => {
+      socket.on("chat message", (message, serverOffset, user, isSameSender) => {
         let item;
 
         if (user.id === currentUser.id) {
@@ -112,45 +160,6 @@
 
         await handleTokenRefresh();
       });
-
-      form.onsubmit = (event) => {
-        event.preventDefault();
-
-        if (input.value) {
-          socket.emit("chat message", input.value);
-
-          input.value = '';
-        }
-      };
-    };
-
-    const handleTokenRefresh = async () => {
-      const refreshed = await refreshAccessToken();
-
-      if (refreshed) {
-        connectToSocket();
-      } else {
-        window.location.href = '/access';
-      }
-    };
-
-    const refreshAccessToken = async () => {
-      try {
-        const response = await fetch("/refresh", {
-          method: "POST",
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          return true;
-        } else {
-          return false;
-        }
-      } catch (error) {
-        console.error('Trying to renew the token failed');
-
-        return false;
-      }
     };
 
     connectToSocket();
@@ -185,8 +194,8 @@
 
     <!-- Chat Section -->
     <main class="h-[calc(100%-4rem)]">
-      <form id="chat-form" class="px-4 pt-0 pb-[4em] flex flex-col space-y-4 overflow-y-auto h-full">
-        <ul id="messages" class="list-none m-0 pb-12 p-0 px-[0.6em] overflow-y-scroll h-full scroll-smooth"></ul>
+      <form id="chat-form" class="pb-[4em] flex flex-col space-y-4 overflow-y-auto h-full">
+        <ul id="messages" class="list-none m-0 pb-12 p-0 px-4 overflow-y-scroll h-full scroll-smooth"></ul>
 
         <!-- Input Section -->
         <div class="absolute bottom-0 w-full left-0 bg-gray-200 p-3 flex items-center space-x-2">
