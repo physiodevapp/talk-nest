@@ -16,13 +16,9 @@ const app = express()
 const server = createServer(app)
 const io = new Server(server, {
   connectionStateRecovery: {
-    maxDisconnectionDuration: 60000
+    maxDisconnectionDuration: 240000
   }
 })
-
-const globalState = {
-  previousUserId: null
-}
 
 app.use(express.static(path.resolve(process.cwd(), 'public')))
 app.use(express.json())
@@ -41,18 +37,15 @@ io.on('connection', async (socket) => {
     console.log(`User ${username} has disconnected`)
   })
 
-  socket.on('chat message', async (message) => {
-    console.log('chat message event from server')
+  socket.on('chat message', async (message, tempId) => {
+    console.log('++ server -> chat message event emitted')
     try {
       const { id, username } = validateUser(socket)
       const user = { id, username }
 
       const messageId = await MessageModel.add({ userId: user.id, message })
-      const isSameSender = user.id === globalState.previousUserId
 
-      io.emit('chat message', message, messageId.toString(), user, isSameSender)
-
-      globalState.previousUserId = user.id
+      io.emit('chat message', message, messageId.toString(), user, tempId)
     } catch (error) {
       console.error(error.message)
 
@@ -73,15 +66,10 @@ io.on('connection', async (socket) => {
       const users = await UserModel.getUsersByIds(userIds)
       const userMap = Object.fromEntries(users.map(user => [user.id, user]))
 
-      for (const [index, { id: messageId, message, user_id: userId }] of results.entries()) {
+      for (const { id: messageId, message, user_id: userId } of results) {
         const user = userMap[userId] || null
 
-        const isFirstMessage = index === 0 || globalState.previousUserId === null
-        const isSameSender = !isFirstMessage && userId === globalState.previousUserId
-
-        socket.emit('chat message', message, messageId, user, isSameSender)
-
-        globalState.previousUserId = userId
+        socket.emit('chat message', message, messageId, user)
       }
     } catch (error) {
       console.error(error)
