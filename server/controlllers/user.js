@@ -36,8 +36,7 @@ export class UserController {
           username: user.username
         })
         const refreshToken = generateRefreshToken({
-          id: user.id,
-          username: user.username
+          id: user.id
         })
 
         res
@@ -72,7 +71,9 @@ export class UserController {
     }
 
     try {
-      const user = jwt.verify(refreshToken, REFRESH_SECRET_KEY)
+      const { id } = jwt.verify(refreshToken, REFRESH_SECRET_KEY)
+
+      const user = await UserModel.getById({ id })
 
       const newAccessToken = generateAccessToken({
         id: user.id,
