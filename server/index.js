@@ -16,7 +16,8 @@ const app = express()
 const server = createServer(app)
 const io = new Server(server, {
   connectionStateRecovery: {
-    maxDisconnectionDuration: 240000
+    maxDisconnectionDuration: 10 * 60 * 1000,
+    skipMiddlewares: true
   }
 })
 
@@ -29,16 +30,16 @@ io.engine.use(cookieParser())
 io.use(authenticateSocket)
 
 io.on('connection', async (socket) => {
-  const { username } = socket.user
-  console.log(`User ${username} has connected`)
+  console.log('An user has connected')
+  // console.log(socket)
 
   socket.on('disconnect', () => {
-    const { username } = socket.user
-    console.log(`User ${username} has disconnected`)
+    console.log('An user has disconnected')
+    // console.log(socket)
   })
 
   socket.on('chat message', async (message, tempId) => {
-    console.log('++ server -> chat message event emitted')
+    console.log('++ server -> on chat message : ', message)
     try {
       const { id, username } = validateUser(socket)
       const user = { id, username }
@@ -47,14 +48,16 @@ io.on('connection', async (socket) => {
 
       io.emit('chat message', message, messageId.toString(), user, tempId)
     } catch (error) {
-      console.error(error.message)
+      console.error('++ server -> auth_error ? --> ', error.message)
+      if (['Invalid token', 'Token required', 'Token expired'].includes(error.message)) {
+        socket.emit('auth_error', 'Invalid token')
 
-      socket.emit('auth_error', 'Session expired. Please, log in again.')
-
-      socket.disconnect()
+        // socket.disconnect()
+      }
     }
   })
 
+  console.log('++ server -> on connect socket recovered ?', socket.recovered, '-> serverOffset: ', socket.handshake.auth.serverOffset)
   if (!socket.recovered) {
     try {
       const messageId = socket.handshake.auth.serverOffset ?? 0
