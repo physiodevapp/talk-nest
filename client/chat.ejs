@@ -43,8 +43,8 @@
     const currentUser = JSON.parse('<%- JSON.stringify(currentUser) %>');
   </script>
   <script type="module">
-    // import { io } from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
     import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
+    import { ulid } from "https://unpkg.com/ulid@2.3.0/dist/index.js";
 
     let formSubmitHandler;
 
@@ -54,8 +54,6 @@
     const localSelfRenderedMessages = new Map();
     let lastSenderId = null;
 
-    const generateUniqueId = () => `msg_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-
     const handleFormSubmit = (socket) => (event) => {
       event.preventDefault();
 
@@ -63,14 +61,13 @@
 
       if (!message) return;
 
-      const tempId = generateUniqueId();
+      const tempId = ulid();
       const isFirstInChain = lastSenderId !== currentUser.id;
       addMessageToUI(message, tempId, true, true, isFirstInChain);
       lastSenderId = currentUser.id;
 
       localSelfRenderedMessages.set(tempId, message);
 
-      console.log('-- client -> on handleFormSubmit socket connected ? ', socket.connected);
       if (socket.connected) {
         socket.emit("chat message", message, tempId);
       } else {
@@ -96,14 +93,14 @@
       }
     };
 
-    const addMessageToUI = (message, messageId, isCurrentUser, isLocal, isFirstInChain) => {
-      let item = document.getElementById(messageId);
+    const addMessageToUI = (message, tempId, isCurrentUser, isLocal, isFirstInChain) => {
+      let item = document.getElementById(tempId);
 
       if (item) return;
 
       if (isCurrentUser) {
         item = `
-          <li id=${messageId} class="${isLocal ? 'local-message ' : ''}relative bg-[#d9ffdb] p-3 rounded-md self-end m-[0.2em_0_0.2em_4em]${isFirstInChain ? ' gap' : ''}">
+          <li id=${tempId} class="${isLocal ? 'local-message ' : ''}relative bg-[#d9ffdb] p-3 rounded-md self-end m-[0.2em_0_0.2em_4em]${isFirstInChain ? ' gap' : ''}">
             ${isFirstInChain ?
             `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 right-0 translate-x-2" width="20" height="20"
               viewBox="0 0 20 20">
@@ -115,7 +112,7 @@
         `;
       } else {
         item = `
-          <li id=${messageId} class="${!isLocal ? 'remote-message ' : ''}relative bg-[#f3f4f6] p-3 rounded-md m-[0.2em_4em_0.2em_0em]${isFirstInChain ? ' gap' : ''}"}">
+          <li id=${tempId} class="${!isLocal ? 'remote-message ' : ''}relative bg-[#f3f4f6] p-3 rounded-md m-[0.2em_4em_0.2em_0em]${isFirstInChain ? ' gap' : ''}"}">
             ${isFirstInChain ?
             `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 left-0 -translate-x-2" width="20" height="20"
               viewBox="0 0 20 20">
@@ -139,9 +136,31 @@
 
       item.querySelector('.content').textContent = newMessage;
 
-      item.setAttribute("id", messageId);
+      // item.setAttribute("id", messageId);
 
       item.classList.remove('local-message');
+      item.classList.add('remote-message');
+    };
+
+    const sortMessagesByTime = () => {
+      const remoteMessages = Array.from(document.querySelectorAll('.remote-message'));
+
+      const sortedMessages = [...remoteMessages].sort((a, b) => {
+        const idA = a.getAttribute('id');
+        const idB = b.getAttribute('id');
+
+        return idA.localeCompare(idB);
+      });
+
+      const arraysAreEqual = remoteMessages.every((message, index) => message.id === sortedMessages[index].id);
+
+      if (!arraysAreEqual) {
+        messages.replaceChildren();
+
+        sortedMessages.forEach((message, index) => {
+          messages.appendChild(message);
+        });
+      }
     };
 
     const disconnectSocketSafely = (socket) => {
@@ -164,7 +183,7 @@
       const refreshed = await refreshAccessToken();
 
       if (refreshed) {
-        console.log('token renewed successfully');
+        console.log('-- client -> handleTokenRefresh: token renewed successfully');
         if (!shouldAutoReconnect) {
           reconnectSocketSafely(socket);
         }
@@ -214,18 +233,21 @@
         const isCurrentUser = user?.id === currentUser.id;
         const isLocalMessage = tempId && localSelfRenderedMessages.has(tempId);
         const isMessageRendered = isCurrentUser && isLocalMessage;
-        console.log('-- client -> on chat message : ', message, ' -> ', messageId, '-> is message rendered ? ', isMessageRendered);
+        console.log('-- client -> on chat message : ', message);
 
         if (!isMessageRendered) {
           const isFirstInChain = (lastSenderId !== user?.id);
-          addMessageToUI(message, messageId, isCurrentUser, false, isFirstInChain);
+          addMessageToUI(message, tempId, isCurrentUser, false, isFirstInChain);
 
           lastSenderId = user?.id;
         } else {
           localSelfRenderedMessages.delete(tempId);
 
           updateMessageInUI(message, tempId, messageId);
+
         }
+
+        sortMessagesByTime();
 
         socket.auth.serverOffset = messageId;
       });
@@ -233,8 +255,6 @@
       socket.on("connect", () => {
         let storedPendingMessages = JSON.parse(localStorage.getItem("storedPendingMessages")) || [];
         const remainingMessages = [];
-        console.log('-- client -> on connect storedPendingMessages ?', storedPendingMessages);
-        console.log('-- client -> on connect socket recovered ?', socket.recovered);
 
         storedPendingMessages.forEach((message) => {
           socket.emit("chat message", message[1], message[0], () => { }, () => {
@@ -249,16 +269,8 @@
 
       socket.on("disconnect", () => {
         const storedPendingMessages = JSON.parse(localStorage.getItem("storedPendingMessages")) || [];
-        const existingTempIds = new Set(storedPendingMessages.map(([tempId]) => tempId));
-
-        localSelfRenderedMessages.forEach(([tempId, message]) => {
-          if (!existingTempIds.has(tempId)) {
-            storedPendingMessages.push([tempId, message]);
-            existingTempIds.add(tempId);
-          }
-        });
-        // storedPendingMessages.push(...localSelfRenderedMessages);
-        console.log('-- client -> on disconnect', storedPendingMessages);
+ 
+        storedPendingMessages.push(...localSelfRenderedMessages);
 
         localStorage.setItem("storedPendingMessages", JSON.stringify(storedPendingMessages));
       });

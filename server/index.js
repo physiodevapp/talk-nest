@@ -39,20 +39,18 @@ io.on('connection', async (socket) => {
   })
 
   socket.on('chat message', async (message, tempId) => {
-    console.log('++ server -> on chat message : ', message)
+    console.log('++ server -> on chat message : ', message, ' - ', tempId)
     try {
       const { id, username } = validateUser(socket)
       const user = { id, username }
 
-      const messageId = await MessageModel.add({ userId: user.id, message })
+      const messageId = await MessageModel.add({ userId: user.id, message, createdULID: tempId })
 
       io.emit('chat message', message, messageId.toString(), user, tempId)
     } catch (error) {
       console.error('++ server -> auth_error ? --> ', error.message)
       if (['Invalid token', 'Token required', 'Token expired'].includes(error.message)) {
         socket.emit('auth_error', 'Invalid token')
-
-        // socket.disconnect()
       }
     }
   })
