@@ -43,17 +43,16 @@
     const currentUser = JSON.parse('<%- JSON.stringify(currentUser) %>');
   </script>
   <script type="module">
-    import { io } from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
+    import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
+    import { ulid } from "https://unpkg.com/ulid@2.3.0/dist/index.js";
 
     let formSubmitHandler;
 
     const form = document.getElementById("chat-form");
     const input = document.getElementById("input");
     const messages = document.getElementById("messages");
-    const localMessages = new Map();
+    const localSelfRenderedMessages = new Map();
     let lastSenderId = null;
-
-    const generateUniqueId = () => `msg_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 
     const handleFormSubmit = (socket) => (event) => {
       event.preventDefault();
@@ -62,35 +61,47 @@
 
       if (!message) return;
 
-      const tempId = generateUniqueId();
-      const isFirst = lastSenderId !== currentUser.id;
-      addMessageToUI(message, tempId, true, true, isFirst);
+      const tempId = ulid();
+      const isFirstInChain = lastSenderId !== currentUser.id;
+      addMessageToUI(message, tempId, true, true, isFirstInChain);
       lastSenderId = currentUser.id;
 
-      localMessages.set(tempId, message);
+      localSelfRenderedMessages.set(tempId, message);
 
       if (socket.connected) {
         socket.emit("chat message", message, tempId);
       } else {
-        const pendingMessages = JSON.parse(localStorage.getItem("pendingMessages")) || [];
+        const storedPendingMessages = JSON.parse(localStorage.getItem("storedPendingMessages")) || [];
 
-        pendingMessages.push([tempId, message]);
+        storedPendingMessages.push([tempId, message]);
 
-        localStorage.setItem("pendingMessages", JSON.stringify(pendingMessages));
+        localStorage.setItem("storedPendingMessages", JSON.stringify(storedPendingMessages));
       }
 
       input.value = '';
     };
 
-    const addMessageToUI = (message, messageId, isCurrentUser, isLocal, isFirst) => {
-      let item = document.getElementById(messageId);
+    const resetFormAndMessages = (socket) => {
+      if (socket) {
+        if (formSubmitHandler) {
+          form.removeEventListener("submit", formSubmitHandler);
+        }
+        formSubmitHandler = handleFormSubmit(socket);
+        form.addEventListener("submit", formSubmitHandler);
+
+        messages.replaceChildren();
+      }
+    };
+
+    const addMessageToUI = (message, tempId, isCurrentUser, isLocal, isFirstInChain) => {
+      let item = document.getElementById(tempId);
 
       if (item) return;
 
       if (isCurrentUser) {
         item = `
-          <li id=${messageId} class="${isLocal ? 'local-message ' : ''}relative bg-[#d9ffdb] p-3 rounded-md self-end m-[0.2em_0_0.2em_4em]${isFirst ? ' gap' : ''}">
-            ${isFirst ?
+          <li id=${tempId} class="${isLocal ? 'local-message ' : ''}relative bg-[#d9ffdb] p-3 rounded-md self-end m-[0.2em_0_0.2em_4em]${isFirstInChain ? ' gap' : ''}">
+            ${isFirstInChain ?
             `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 right-0 translate-x-2" width="20" height="20"
               viewBox="0 0 20 20">
               <path d="M0 0 L0 20 L20 0 Z" fill="#d9ffdb"></path>
@@ -101,8 +112,8 @@
         `;
       } else {
         item = `
-          <li id=${messageId} class="${!isLocal ? 'remote-message ' : ''}relative bg-[#f3f4f6] p-3 rounded-md m-[0.2em_4em_0.2em_0em]${isFirst ? ' gap' : ''}"}">
-            ${isFirst ?
+          <li id=${tempId} class="${!isLocal ? 'remote-message ' : ''}relative bg-[#f3f4f6] p-3 rounded-md m-[0.2em_4em_0.2em_0em]${isFirstInChain ? ' gap' : ''}"}">
+            ${isFirstInChain ?
             `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 left-0 -translate-x-2" width="20" height="20"
               viewBox="0 0 20 20">
               <path d="M20 20 L20 0 L0 0 Z" fill="#f3f4f6"></path>
@@ -125,16 +136,57 @@
 
       item.querySelector('.content').textContent = newMessage;
 
-      item.setAttribute("id", messageId);
+      // item.setAttribute("id", messageId);
 
       item.classList.remove('local-message');
+      item.classList.add('remote-message');
     };
 
-    const handleTokenRefresh = async () => {
+    const sortMessagesByTime = () => {
+      const remoteMessages = Array.from(document.querySelectorAll('.remote-message'));
+
+      const sortedMessages = [...remoteMessages].sort((a, b) => {
+        const idA = a.getAttribute('id');
+        const idB = b.getAttribute('id');
+
+        return idA.localeCompare(idB);
+      });
+
+      const arraysAreEqual = remoteMessages.every((message, index) => message.id === sortedMessages[index].id);
+
+      if (!arraysAreEqual) {
+        messages.replaceChildren();
+
+        sortedMessages.forEach((message, index) => {
+          messages.appendChild(message);
+        });
+      }
+    };
+
+    const disconnectSocketSafely = (socket) => {
+      if (socket.connected) {
+        socket.disconnect();
+      }
+    };
+
+    const reconnectSocketSafely = (socket) => {
+      if (!socket.connected) {
+        socket.connect();
+      }
+    };
+
+    const handleTokenRefresh = async (socket, shouldAutoReconnect = true) => {
+      if (!shouldAutoReconnect) {
+        disconnectSocketSafely(socket);
+      }
+
       const refreshed = await refreshAccessToken();
 
       if (refreshed) {
-        connectToSocket();
+        console.log('-- client -> handleTokenRefresh: token renewed successfully');
+        if (!shouldAutoReconnect) {
+          reconnectSocketSafely(socket);
+        }
       } else {
         window.location.href = '/access';
       }
@@ -167,77 +219,72 @@
         }
       });
 
-      if (socket) {
-        socket.off("chat message");
-        socket.off("connect_error");
-        socket.off("auth_error");
+      console.log('-- client -> on connectToSocket (NEW)', localSelfRenderedMessages);
 
-        if (formSubmitHandler) {
-          form.removeEventListener("submit", formSubmitHandler);
-        }
-        formSubmitHandler = handleFormSubmit(socket);
-        form.addEventListener("submit", formSubmitHandler);
+      socket.off("chat message");
+      socket.off("connect_error");
+      socket.off("connect");
+      socket.off("disconnect");
+      socket.off("auth_error");
 
-        messages.replaceChildren();
-      }
+      resetFormAndMessages(socket);
 
       socket.on("chat message", (message, messageId, user, tempId = null) => {
         const isCurrentUser = user?.id === currentUser.id;
-        const isLocalMessage = tempId && localMessages.has(tempId);
+        const isLocalMessage = tempId && localSelfRenderedMessages.has(tempId);
         const isMessageRendered = isCurrentUser && isLocalMessage;
+        console.log('-- client -> on chat message : ', message);
 
         if (!isMessageRendered) {
-          const isFirst  = (lastSenderId !== user?.id);
-          addMessageToUI(message, messageId, isCurrentUser, false, isFirst);
-          lastSenderId = user?.id;
+          const isFirstInChain = (lastSenderId !== user?.id);
+          addMessageToUI(message, tempId, isCurrentUser, false, isFirstInChain);
 
-          socket.auth.serverOffset = messageId;
+          lastSenderId = user?.id;
         } else {
-          localMessages.delete(tempId);
+          localSelfRenderedMessages.delete(tempId);
 
           updateMessageInUI(message, tempId, messageId);
+
         }
+
+        sortMessagesByTime();
+
+        socket.auth.serverOffset = messageId;
       });
 
       socket.on("connect", () => {
-        console.log('-- client -> connected');
-
-        let pendingMessages = JSON.parse(localStorage.getItem("pendingMessages")) || [];
+        let storedPendingMessages = JSON.parse(localStorage.getItem("storedPendingMessages")) || [];
         const remainingMessages = [];
 
-        pendingMessages.forEach((message) => {
+        storedPendingMessages.forEach((message) => {
           socket.emit("chat message", message[1], message[0], () => { }, () => {
             remainingMessages.push(message);
           });
         });
 
-        pendingMessages = remainingMessages;
+        storedPendingMessages = remainingMessages;
 
-        localStorage.setItem("pendingMessages", JSON.stringify(pendingMessages));
+        localStorage.setItem("storedPendingMessages", JSON.stringify(storedPendingMessages));
       });
 
       socket.on("disconnect", () => {
-        console.log('-- client -> disconnected');
+        const storedPendingMessages = JSON.parse(localStorage.getItem("storedPendingMessages")) || [];
+ 
+        storedPendingMessages.push(...localSelfRenderedMessages);
 
-        const pendingMessages = JSON.parse(localStorage.getItem("pendingMessages")) || [];
-
-        pendingMessages.push(...localMessages);
-
-        localStorage.setItem("pendingMessages", JSON.stringify(pendingMessages));
+        localStorage.setItem("storedPendingMessages", JSON.stringify(storedPendingMessages));
       });
 
       socket.on("connect_error", async (error) => {
-        if (error.message === 'Invalid token' || error.message === 'Token required') {
-          console.info('Trying to renew the token...');
-
-          await handleTokenRefresh();
+        if (['Invalid token', 'Token required', 'Token expired'].includes(error.message)) {
+          console.info('-- client connect_error -> Trying to renew the token...', error.message);
+          await handleTokenRefresh(socket, false);
         }
       });
 
       socket.on("auth_error", async (error) => {
-        console.info('Trying to renew the token...');
-
-        await handleTokenRefresh();
+        console.info('-- client auth_error -> Trying to renew the token...', error);
+        await handleTokenRefresh(socket, false);
       });
     };
 

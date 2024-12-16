@@ -18,7 +18,7 @@ export const authenticateUser = (req, res, next) => {
   }
 }
 
-export const authenticateSocket = (socket, next) => {
+export const authenticateSocket = async (socket, next) => {
   try {
     const { id, username } = validateUser(socket)
 
