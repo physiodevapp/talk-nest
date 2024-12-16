@@ -20,13 +20,16 @@ export class MessageModel {
           VALUES (?, UUID_TO_BIN(?), ?);
         `, [message, userId, createdULID])
 
-      if (!messageId) throw new Error('Unkown message')
+      if (!messageId) throw new Error('DB Error: Unkown message')
 
       return messageId
     } catch (error) {
       console.error(error)
-
-      throw new Error('Error while trying to add a message')
+      if (error.code === 'ER_DUP_ENTRY') {
+        throw new Error('DB Error: duplicated')
+      } else {
+        throw new Error('DB Error: ', error.message)
+      }
     }
   }
 

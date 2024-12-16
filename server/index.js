@@ -38,19 +38,21 @@ io.on('connection', async (socket) => {
     // console.log(socket)
   })
 
-  socket.on('chat message', async (message, tempId) => {
-    console.log('++ server -> on chat message : ', message, ' - ', tempId)
+  socket.on('chat message', async (message, messageULID) => {
+    console.log('++ server -> on chat message : ', message, ' - ', messageULID)
     try {
       const { id, username } = validateUser(socket)
       const user = { id, username }
 
-      const messageId = await MessageModel.add({ userId: user.id, message, createdULID: tempId })
+      const messageId = await MessageModel.add({ userId: user.id, message, createdULID: messageULID })
 
-      io.emit('chat message', message, messageId.toString(), user, tempId)
+      io.emit('chat message', message, messageULID, user, messageId)
     } catch (error) {
       console.error('++ server -> auth_error ? --> ', error.message)
       if (['Invalid token', 'Token required', 'Token expired'].includes(error.message)) {
         socket.emit('auth_error', 'Invalid token')
+      } else if (['DB Error: duplicated'].includes(message.error)) {
+        socket.emit('db_error', { message: 'Message duplicated', messageULID })
       }
     }
   })
@@ -67,10 +69,10 @@ io.on('connection', async (socket) => {
       const users = await UserModel.getUsersByIds(userIds)
       const userMap = Object.fromEntries(users.map(user => [user.id, user]))
 
-      for (const { id: messageId, message, user_id: userId } of results) {
+      for (const { created_ulid: createdULID, message, user_id: userId } of results) {
         const user = userMap[userId] || null
 
-        socket.emit('chat message', message, messageId, user)
+        socket.emit('chat message', message, createdULID, user, messageId)
       }
     } catch (error) {
       console.error(error)

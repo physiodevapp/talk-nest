@@ -51,8 +51,124 @@
     const form = document.getElementById("chat-form");
     const input = document.getElementById("input");
     const messages = document.getElementById("messages");
-    const localSelfRenderedMessages = new Map();
     let lastSenderId = null;
+
+    const openDB = () => {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open("ChatDB", 1);
+
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          const objectStore = db.createObjectStore("messages", { keyPath: "id" });
+          objectStore.createIndex("status", "status", { unique: false });
+        };
+
+        request.onsuccess = (event) => resolve(event.target.result);
+        request.onerror = (event) => reject(event.target.error);
+      });
+    };
+
+    const saveMessage = async (messageULID, message) => {
+      const db = await openDB();
+      const transaction = db.transaction("messages", "readwrite");
+      const store = transaction.objectStore("messages");
+
+      const data = {
+        id: messageULID,
+        content: message,
+        status: "pending",
+      };
+
+      store.add(data);
+      transaction.oncomplete = () => {
+        console.log("Mensaje guardado en IndexedDB");
+      };
+      transaction.onerror = () => {
+        console.error("Error al guardar el mensaje, añadiendo a la cola de reintento");
+        retryQueue.push(data);
+        retrySaveMessage();
+      };
+    };
+
+    const retrySaveMessage = async () => {
+      while (retryQueue.length > 0) {
+        const db = await openDB();
+        const transaction = db.transaction("messages", "readwrite");
+        const store = transaction.objectStore("messages");
+
+        const message = retryQueue.shift();
+
+        try {
+          store.add(message);
+          transaction.oncomplete = () => {
+            console.log(`Reintento exitoso: Mensaje ${message.id} guardado`);
+          };
+        } catch (error) {
+          console.error(`Reintento fallido para el mensaje ${message.id}, reinsertando en la cola`);
+          retryQueue.push(message);
+          break;
+        }
+      }
+
+      if (retryQueue.length > 0) {
+        setTimeout(retrySaveMessage, 5000);
+      }
+    };
+
+    const messageExists = async (id) => {
+      const db = await openDB();
+      const transaction = db.transaction("messages", "readonly");
+      const store = transaction.objectStore("messages");
+
+      const request = await store.get(id);
+      return new Promise((resolve, reject) => {
+        const request = store.get(id);
+
+        request.onsuccess = () => {
+          resolve(!!request.result);
+        };
+
+        request.onerror = () => {
+          console.error('Error al buscar el mensaje:', request.error);
+          reject(request.error);
+        };
+      });
+    };
+
+    const resendPendingMessages = async (socket) => {
+      const db = await openDB();
+      const transaction = db.transaction("messages", "readonly");
+      const store = transaction.objectStore("messages");
+      const index = store.index("status");
+
+      const pendingMessages = [];
+      index.openCursor("pending").onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+          pendingMessages.push(cursor.value);
+          cursor.continue();
+        } else {
+          console.log("Mensajes pendientes encontrados:", pendingMessages);
+
+          pendingMessages.forEach(async (message) => {
+            try {
+              socket.emit("chat message", message.content, message.id);
+            } catch (error) {
+              console.error("Error al reenviar mensaje:", message.id);
+            }
+          });
+        }
+      };
+    };
+
+    const deleteMessage = async (id) => {
+      const db = await openDB();
+      const transaction = db.transaction("messages", "readwrite");
+      const store = transaction.objectStore("messages");
+
+      store.delete(id);
+      console.log(`Mensaje ${id} eliminado de IndexedDB`);
+    };
 
     const handleFormSubmit = (socket) => (event) => {
       event.preventDefault();
@@ -61,132 +177,97 @@
 
       if (!message) return;
 
-      const tempId = ulid();
+      const messageULID = ulid();
       const isFirstInChain = lastSenderId !== currentUser.id;
-      addMessageToUI(message, tempId, true, true, isFirstInChain);
+      addMessageToUI(message, messageULID, true, true, currentUser.id);
       lastSenderId = currentUser.id;
 
-      localSelfRenderedMessages.set(tempId, message);
+      saveMessage(messageULID, message);
 
       if (socket.connected) {
-        socket.emit("chat message", message, tempId);
-      } else {
-        const storedPendingMessages = JSON.parse(localStorage.getItem("storedPendingMessages")) || [];
-
-        storedPendingMessages.push([tempId, message]);
-
-        localStorage.setItem("storedPendingMessages", JSON.stringify(storedPendingMessages));
+        socket.emit("chat message", message, messageULID);
       }
 
       input.value = '';
     };
 
     const resetFormAndMessages = (socket) => {
-      if (socket) {
-        if (formSubmitHandler) {
-          form.removeEventListener("submit", formSubmitHandler);
-        }
-        formSubmitHandler = handleFormSubmit(socket);
-        form.addEventListener("submit", formSubmitHandler);
-
-        messages.replaceChildren();
+      if (formSubmitHandler) {
+        form.removeEventListener("submit", formSubmitHandler);
       }
+      formSubmitHandler = handleFormSubmit(socket);
+      form.addEventListener("submit", formSubmitHandler);
+
+      messages.replaceChildren();
     };
 
-    const addMessageToUI = (message, tempId, isCurrentUser, isLocal, isFirstInChain) => {
-      let item = document.getElementById(tempId);
+    const addMessageToUI = (message, messageULID, isCurrentUser, isLocal, userId) => {
+      let item = document.getElementById(messageULID);
 
       if (item) return;
 
-      if (isCurrentUser) {
-        item = `
-          <li id=${tempId} class="${isLocal ? 'local-message ' : ''}relative bg-[#d9ffdb] p-3 rounded-md self-end m-[0.2em_0_0.2em_4em]${isFirstInChain ? ' gap' : ''}">
-            ${isFirstInChain ?
-            `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 right-0 translate-x-2" width="20" height="20"
-              viewBox="0 0 20 20">
-              <path d="M0 0 L0 20 L20 0 Z" fill="#d9ffdb"></path>
-            </svg>`
-            : ''}
-            <p class="content text-gray-800">${message}</p>
-          </li>
-        `;
-      } else {
-        item = `
-          <li id=${tempId} class="${!isLocal ? 'remote-message ' : ''}relative bg-[#f3f4f6] p-3 rounded-md m-[0.2em_4em_0.2em_0em]${isFirstInChain ? ' gap' : ''}"}">
-            ${isFirstInChain ?
-            `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 left-0 -translate-x-2" width="20" height="20"
-              viewBox="0 0 20 20">
-              <path d="M20 20 L20 0 L0 0 Z" fill="#f3f4f6"></path>
-            </svg>`
-            : ''}
-            <p class="text-gray-800">${message}</p>
-          </li>
-        `;
-      }
+      const children = Array.from(messages.children);
 
-      messages.insertAdjacentHTML("beforeend", item);
+      // Encontrar el elemento donde insertar el nuevo mensaje
+      const insertBeforeItem = children.find((child) =>
+        child.id.localeCompare(messageULID) > 0
+      );
+
+      // Determinar el elemento anterior en el DOM
+      const previousItem = insertBeforeItem
+        ? insertBeforeItem.previousElementSibling
+        : children[children.length - 1];
+
+      // Verificar si el mensaje es el primero de la cadena
+      const isFirstInChain =
+        !previousItem || previousItem.dataset.userId !== userId;
+
+      const itemHTML = `
+        <li 
+          id="${messageULID}" 
+          data-user-id="${userId}" 
+          class="${isCurrentUser ? 'local-message' : 'remote-message'} 
+            relative p-3 rounded-md 
+            ${isCurrentUser ? 'bg-[#d9ffdb]' : 'bg-[#f3f4f6]'} 
+            ${isFirstInChain ? 'gap' : ''} 
+            ${isCurrentUser ? 'm-[0.2em_0_0.2em_4em]' : 'm-[0.2em_4em_0.2em_0em]'}">
+          ${isFirstInChain ?
+                `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 ${isCurrentUser ? 'right-0 translate-x-2' : 'left-0 -translate-x-2'}" width="20" height="20" viewBox="0 0 20 20">
+              <path d="${isCurrentUser ? 'M0 0 L0 20 L20 0 Z' : 'M20 20 L20 0 L0 0 Z'}" fill="${isCurrentUser ? '#d9ffdb' : '#f3f4f6'}"></path>
+            </svg>`
+                : ''}
+          <p class="content text-gray-800">${message}</p>
+        </li>`;
+
+      const template = document.createElement('template');
+      template.innerHTML = itemHTML.trim();
+      item = template.content.firstChild;
+
+      if (insertBeforeItem) {
+        messages.insertBefore(item, insertBeforeItem);
+      } else {
+        messages.appendChild(item);
+      }
 
       messages.scrollTop = messages.scrollHeight;
     };
 
-    const updateMessageInUI = (newMessage, tempId, messageId) => {
-      const item = document.getElementById(tempId);
+    const updateMessageInUI = (newMessage, messageULID) => {
+      const item = document.getElementById(messageULID);
 
       if (!item) return;
 
       item.querySelector('.content').textContent = newMessage;
 
-      // item.setAttribute("id", messageId);
-
       item.classList.remove('local-message');
       item.classList.add('remote-message');
     };
 
-    const sortMessagesByTime = () => {
-      const remoteMessages = Array.from(document.querySelectorAll('.remote-message'));
-
-      const sortedMessages = [...remoteMessages].sort((a, b) => {
-        const idA = a.getAttribute('id');
-        const idB = b.getAttribute('id');
-
-        return idA.localeCompare(idB);
-      });
-
-      const arraysAreEqual = remoteMessages.every((message, index) => message.id === sortedMessages[index].id);
-
-      if (!arraysAreEqual) {
-        messages.replaceChildren();
-
-        sortedMessages.forEach((message, index) => {
-          messages.appendChild(message);
-        });
-      }
-    };
-
-    const disconnectSocketSafely = (socket) => {
-      if (socket.connected) {
-        socket.disconnect();
-      }
-    };
-
-    const reconnectSocketSafely = (socket) => {
-      if (!socket.connected) {
-        socket.connect();
-      }
-    };
-
-    const handleTokenRefresh = async (socket, shouldAutoReconnect = true) => {
-      if (!shouldAutoReconnect) {
-        disconnectSocketSafely(socket);
-      }
-
+    const handleTokenRefresh = async (socket) => {
       const refreshed = await refreshAccessToken();
 
       if (refreshed) {
-        console.log('-- client -> handleTokenRefresh: token renewed successfully');
-        if (!shouldAutoReconnect) {
-          reconnectSocketSafely(socket);
-        }
+        console.log('--> client -> access token refreshed');
       } else {
         window.location.href = '/access';
       }
@@ -211,7 +292,7 @@
       }
     };
 
-    const connectToSocket = () => {
+    const connectToSocket = async () => {
       const socket = io({
         auth: {
           token: "USE_COOKIE",
@@ -219,72 +300,64 @@
         }
       });
 
-      console.log('-- client -> on connectToSocket (NEW)', localSelfRenderedMessages);
+      console.log('--> client -> on connectToSocket (NEW)');
 
-      socket.off("chat message");
-      socket.off("connect_error");
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("auth_error");
+      if (socket) {
+        await resetFormAndMessages(socket);
+      }
 
-      resetFormAndMessages(socket);
-
-      socket.on("chat message", (message, messageId, user, tempId = null) => {
+      socket.on("chat message", async (message, messageULID, user, messageId) => {
+        console.log('--> client -> on chat message : ', message);
+        let isInLocalStore;
         const isCurrentUser = user?.id === currentUser.id;
-        const isLocalMessage = tempId && localSelfRenderedMessages.has(tempId);
-        const isMessageRendered = isCurrentUser && isLocalMessage;
-        console.log('-- client -> on chat message : ', message);
+
+        try {
+          isInLocalStore = await messageExists(messageULID);
+        } catch (error) {
+          isInLocalStore = false;
+        }
+        const isMessageRendered = isCurrentUser && isInLocalStore;
 
         if (!isMessageRendered) {
-          const isFirstInChain = (lastSenderId !== user?.id);
-          addMessageToUI(message, tempId, isCurrentUser, false, isFirstInChain);
-
-          lastSenderId = user?.id;
+          addMessageToUI(message, messageULID, isCurrentUser, false, user?.id);
         } else {
-          localSelfRenderedMessages.delete(tempId);
+          await deleteMessage(messageULID);
 
-          updateMessageInUI(message, tempId, messageId);
-
+          updateMessageInUI(message, messageULID);
         }
-
-        sortMessagesByTime();
 
         socket.auth.serverOffset = messageId;
       });
 
-      socket.on("connect", () => {
-        let storedPendingMessages = JSON.parse(localStorage.getItem("storedPendingMessages")) || [];
-        const remainingMessages = [];
-
-        storedPendingMessages.forEach((message) => {
-          socket.emit("chat message", message[1], message[0], () => { }, () => {
-            remainingMessages.push(message);
-          });
-        });
-
-        storedPendingMessages = remainingMessages;
-
-        localStorage.setItem("storedPendingMessages", JSON.stringify(storedPendingMessages));
-      });
-
-      socket.on("disconnect", () => {
-        const storedPendingMessages = JSON.parse(localStorage.getItem("storedPendingMessages")) || [];
- 
-        storedPendingMessages.push(...localSelfRenderedMessages);
-
-        localStorage.setItem("storedPendingMessages", JSON.stringify(storedPendingMessages));
+      socket.on("connect", async () => {
+        console.info('--> client on connect');
+        await resendPendingMessages(socket);
       });
 
       socket.on("connect_error", async (error) => {
         if (['Invalid token', 'Token required', 'Token expired'].includes(error.message)) {
-          console.info('-- client connect_error -> Trying to renew the token...', error.message);
-          await handleTokenRefresh(socket, false);
+          console.info('--> client on connect_error -> Trying to renew the token...', error.message);
+          await handleTokenRefresh(socket);
         }
       });
 
       socket.on("auth_error", async (error) => {
-        console.info('-- client auth_error -> Trying to renew the token...', error);
-        await handleTokenRefresh(socket, false);
+        console.info('--> client auth_error -> Trying to renew the token...', error);
+        socket.disconnect();
+
+        await handleTokenRefresh(socket);
+
+        socket.connect();
+      });
+
+      socket.on('db_error', async (error) => {
+        if (['Message duplicated'].includes(error.message)) {
+          socket.disconnect();
+
+          await deleteMessage(error.messageULID);
+
+          socket.connect();
+        }
       });
     };
 
