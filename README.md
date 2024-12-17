@@ -2,7 +2,7 @@
 
 **TalkNest** es una aplicación de chat en tiempo real diseñada para facilitar la comunicación entre usuarios, con características intuitivas y un diseño moderno.
 <div align="center">
-  <img width="200" src="https://github.com/physiodevapp/talk-nest/blob/main/screenshots/talkNest%20login.png" alt="Login Page" width="400">
+  <img width="800" src="https://github.com/physiodevapp/talk-nest/blob/main/screenshots/talkNest%20login.png" alt="Login Page" width="400">
 </div>
 
 
