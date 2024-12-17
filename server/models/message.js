@@ -1,11 +1,12 @@
 import mysql from 'mysql2/promise'
+import { DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER } from '../../config.js'
 
 const DEFAULT_CONFIG = {
-  host: 'localhost',
-  user: 'root',
-  port: 3306,
-  password: '',
-  database: 'talkNestDB'
+  host: DB_HOST ?? 'localhost',
+  user: DB_USER ?? 'root',
+  port: DB_PORT ?? 3306,
+  password: DB_PASSWORD ?? '',
+  database: DB_NAME
 }
 
 const connectionString = process.env.SQL_URL ?? DEFAULT_CONFIG
