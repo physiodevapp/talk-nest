@@ -1,35 +1,5 @@
 .chat {
-  background-image: url(/images/background_1.jpg);
-
-  header {
-    #menu {
-      z-index: 100;
-      -webkit-box-shadow: -5px 9px 14px -3px rgba(0, 0, 0, 0.19);
-      -moz-box-shadow: -5px 9px 14px -3px rgba(0, 0, 0, 0.19);
-      box-shadow: -5px 9px 14px -3px rgba(0, 0, 0, 0.19);
-    }
+  .gap {
+    margin-top: 1.2em;
   }
-
-  main {
-    backdrop-filter: grayscale(1);
-
-    .gap {
-      margin-top: 1.2em;
-    }
-  }
-}
-
-.access {
-  background-image: url(/images/background_1.jpg) !important;
-  background-size: 173%;
-
-  main input {
-    font-size: 1.4em;
-    text-align: center;
-  }
-
-  main button {
-    font-size: 1.4em;
-  }
-
 }
