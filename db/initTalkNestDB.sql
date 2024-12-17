@@ -13,7 +13,7 @@ CREATE TABLE talknest_users (
 );
 
 CREATE TABLE talknest_messages (
-	id INT PRIMARY KEY AUTO_INCREMENT,
+  id INT PRIMARY KEY AUTO_INCREMENT,
   message VARCHAR(255),
   user_id BINARY(16) NOT NULL,
   created_ulid VARCHAR(26) NOT NULL UNIQUE,
