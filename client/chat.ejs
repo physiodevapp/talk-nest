@@ -208,17 +208,16 @@
 
       const children = Array.from(messages.children);
 
-      // Encontrar el elemento donde insertar el nuevo mensaje
       const insertBeforeItem = children.find((child) =>
         child.id.localeCompare(messageULID) > 0
       );
 
-      // Determinar el elemento anterior en el DOM
       const previousItem = insertBeforeItem
         ? insertBeforeItem.previousElementSibling
         : children[children.length - 1];
 
-      // Verificar si el mensaje es el primero de la cadena
+      console.log('previousItem -> ', previousItem);
+      console.log('userId -> ', userId);
       const isFirstInChain =
         !previousItem || previousItem.dataset.userId !== userId;
 
@@ -226,11 +225,11 @@
         <li 
           id="${messageULID}" 
           data-user-id="${userId}" 
-          class="${isCurrentUser ? 'local-message' : 'remote-message'} 
+          class="${(isCurrentUser && isLocal) ? 'local-message' : 'remote-message'} 
             relative p-3 rounded-md 
-            ${isCurrentUser ? 'bg-[#d9ffdb]' : 'bg-[#f3f4f6]'} 
-            ${isFirstInChain ? 'gap' : ''} 
-            ${isCurrentUser ? 'm-[0.2em_0_0.2em_4em]' : 'm-[0.2em_4em_0.2em_0em]'}">
+            ${isCurrentUser ? 'bg-[#d9ffdb]' : 'bg-[#f3f4f6]'}
+            ${isCurrentUser ? 'mr-[0.2em] ml-[4em]' : 'mr-[4em] ml-[0.2em]'}
+            ${isFirstInChain ? 'mt-[1.2em]' : 'mt-[0.4em]'}">
           ${isFirstInChain ?
                 `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 ${isCurrentUser ? 'right-0 translate-x-2' : 'left-0 -translate-x-2'}" width="20" height="20" viewBox="0 0 20 20">
               <path d="${isCurrentUser ? 'M0 0 L0 20 L20 0 Z' : 'M20 20 L20 0 L0 0 Z'}" fill="${isCurrentUser ? '#d9ffdb' : '#f3f4f6'}"></path>
@@ -266,9 +265,7 @@
     const handleTokenRefresh = async (socket) => {
       const refreshed = await refreshAccessToken();
 
-      if (refreshed) {
-        console.log('--> client -> access token refreshed');
-      } else {
+      if (!refreshed) {
         window.location.href = '/access';
       }
     };
@@ -364,16 +361,19 @@
     connectToSocket();
   </script>
 </head>
+<body class="bg-[url('/images/watercolor-background.jpg')] flex items-center justify-center min-h-screen">
 
-<body class="bg-gray-100 font-sans h-screen">
-  <div class="chat max-w-md mx-auto bg-white shadow-lg h-full">
-    <!-- Header -->
-    <header class="relative bg-[#8b45f7] text-white p-4 flex items-center justify-between">
+  <!-- Main Mobile Container -->
+  <div class="w-full h-screen bg-white sm:w-[320px] sm:h-[700px] sm:rounded-[40px] sm:border-8 sm:border-gray-900 sm:shadow-lg sm:drop-shadow-[0_35px_25px_rgba(0,0,0,0.25)] relative">
+
+    <!-- Notch -->
+    <div class="hidden sm:block absolute top-0 left-1/2 -translate-x-1/2 w-28 h-4 bg-black rounded-b-[20px]"></div>
+
+    <!-- Chat Header -->
+    <header class="relative bg-[#8b45f7] text-white p-4 sm:rounded-t-[30px] flex justify-between items-center">
       <div class="flex items-center space-x-2">
         <div class="rounded-full bg-gray-300 h-8 w-8"></div>
-        <h1 class="text-lg font-semibold">
-          <%= currentUser.username %>
-        </h1>
+        <h1 class="text-lg font-semibold"><%= currentUser.username %></h1>
       </div>
       <button id="menuButton">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -381,10 +381,10 @@
         </svg>
       </button>
       <div id="menu"
-        class="hidden absolute right-6 top-[3em] w-48 bg-white rounded shadow-lg transition-transform duration-300 transform origin-top-right scale-95">
-        <a href="/profile" class="block px-4 py-2 text-gray-700 rounded hover:bg-gray-100">Profile</a>
-        <form action="/logout" method="POST" class="block">
-          <button type="submit" class="w-full text-left px-4 py-2 text-gray-700 rounded hover:bg-gray-100">
+        class="hidden absolute right-4 top-[2.8rem] w-48 bg-white rounded shadow-lg transform scale-95 transition-transform z-10">
+        <a href="/profile" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">Profile</a>
+        <form action="/logout" method="POST">
+          <button type="submit" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">
             Logout
           </button>
         </form>
@@ -392,24 +392,23 @@
     </header>
 
     <!-- Chat Section -->
-    <main class="h-[calc(100%-4rem)]">
-      <form id="chat-form" class="pb-[4em] flex flex-col space-y-4 overflow-y-auto h-full">
-        <ul id="messages" class="list-none m-0 pb-12 p-0 px-4 overflow-y-scroll h-full scroll-smooth"></ul>
-
-        <!-- Input Section -->
-        <div class="absolute bottom-0 w-full left-0 bg-gray-200 p-3 flex items-center space-x-2">
-          <input id="input" type="text" name="message" autocomplete="off" placeholder="Escribe un mensaje"
-            class="flex-1 p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#075e54]" />
-          <button type="submit" class="bg-[#8b45f7] text-white p-2 rounded-full">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-      </form>
+    <main class="h-[calc(100%-8rem)] overflow-y-auto py-4 chat">
+      <ul id="messages" class="list-none m-0 px-4 overflow-y-auto"></ul>
     </main>
+
+    <!-- Chat Input -->
+    <form id="chat-form" class="absolute bottom-0 left-0 w-full bg-gray-200 p-3 flex space-x-2 sm:rounded-b-[30px]">
+      <input id="input" type="text" name="message" autocomplete="off" placeholder="Escribe un mensaje"
+        class="flex-1 p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#8b45f7] outline-none" />
+      <button type="submit" class="bg-[#8b45f7] text-white p-2 rounded-full">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </form>
+
   </div>
+
 </body>
 
 </html>
