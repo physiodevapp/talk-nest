@@ -227,15 +227,16 @@
           data-user-id="${userId}" 
           class="${(isCurrentUser && isLocal) ? 'local-message' : 'remote-message'} 
             relative p-3 rounded-md 
-            ${isCurrentUser ? 'bg-[#d9ffdb]' : 'bg-[#f3f4f6]'}
+            text-[#212121]
+            ${isCurrentUser ? 'bg-[#FFF8E1]' : 'bg-[#F5F5F5]'} 
             ${isCurrentUser ? 'mr-[0.2em] ml-[4em]' : 'mr-[4em] ml-[0.2em]'}
             ${isFirstInChain ? 'mt-[1.2em]' : 'mt-[0.4em]'}">
           ${isFirstInChain ?
                 `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 ${isCurrentUser ? 'right-0 translate-x-2' : 'left-0 -translate-x-2'}" width="20" height="20" viewBox="0 0 20 20">
-              <path d="${isCurrentUser ? 'M0 0 L0 20 L20 0 Z' : 'M20 20 L20 0 L0 0 Z'}" fill="${isCurrentUser ? '#d9ffdb' : '#f3f4f6'}"></path>
+              <path d="${isCurrentUser ? 'M0 0 L0 20 L20 0 Z' : 'M20 20 L20 0 L0 0 Z'}" fill="${isCurrentUser ? '#FFF8E1' : '#F5F5F5'}"></path>
             </svg>`
                 : ''}
-          <p class="content text-gray-800">${message}</p>
+          <p class="content">${message}</p>
         </li>`;
 
       const template = document.createElement('template');
@@ -370,7 +371,7 @@
     <div class="hidden sm:block absolute top-0 left-1/2 -translate-x-1/2 w-28 h-4 bg-black rounded-b-[20px]"></div>
 
     <!-- Chat Header -->
-    <header class="relative bg-[#8b45f7] text-white p-4 sm:rounded-t-[30px] flex justify-between items-center">
+    <header class="relative bg-[#FBC02D] text-[#212121] p-4 sm:rounded-t-[30px] flex justify-between items-center">
       <div class="flex items-center space-x-2">
         <div class="rounded-full bg-gray-300 h-8 w-8"></div>
         <h1 class="text-lg font-semibold"><%= currentUser.username %></h1>
@@ -397,10 +398,10 @@
     </main>
 
     <!-- Chat Input -->
-    <form id="chat-form" class="absolute bottom-0 left-0 w-full bg-gray-200 p-3 flex space-x-2 sm:rounded-b-[30px]">
+    <form id="chat-form" class="absolute bottom-0 left-0 w-full bg-[#F8F8F8] p-3 flex space-x-2 sm:rounded-b-[30px]">
       <input id="input" type="text" name="message" autocomplete="off" placeholder="Escribe un mensaje"
         class="flex-1 p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#8b45f7] outline-none" />
-      <button type="submit" class="bg-[#8b45f7] text-white p-2 rounded-full">
+      <button type="submit" class="bg-[#D6244F] text-white p-2 rounded-full">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
