@@ -1,0 +1,36 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v3
+
+      - name: Configurar SSH y desplegar en EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: "./"
+          target: "/home/ubuntu/talk-nest"
+
+      - name: Ejecutar comandos en EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/ubunto/talk-nest
+            git pull origin main
+            npm install
+            pm2 restart /home/ubuntu/talk-nest/ecosystem.config.cjs --update-env
+
