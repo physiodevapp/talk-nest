@@ -1,6 +1,6 @@
 import mysql from 'mysql2/promise'
 import bcrypt from 'bcrypt'
-import { DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, JWT_SALT } from '../../config.js'
+import { DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, JWT_SALT, SQL_URL } from '../../config.js'
 
 const DEFAULT_CONFIG = {
   host: DB_HOST ?? 'localhost',
@@ -10,7 +10,7 @@ const DEFAULT_CONFIG = {
   database: DB_NAME
 }
 
-const connectionString = process.env.SQL_URL ?? DEFAULT_CONFIG
+const connectionString = SQL_URL ?? DEFAULT_CONFIG
 
 const connection = await mysql.createConnection(connectionString)
 
