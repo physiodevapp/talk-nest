@@ -77,7 +77,7 @@ export class UserModel {
     }
   }
 
-  static getUsersByIds = async (ids) => {
+  static getAllById = async (ids) => {
     if (!ids || ids.length === 0) {
       throw new Error('You must provide at least one ID')
     }

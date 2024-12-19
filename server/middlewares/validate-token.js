@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken'
 
 import { JWT_SECRET_KEY } from '../../config.js'
 
-export const authenticateUser = (req, res, next) => {
+export const handleUserTokenValidation = (req, res, next) => {
   const token = req.cookies.access_token
 
   if (!token) return res.status(401).redirect('/access')
@@ -18,9 +18,9 @@ export const authenticateUser = (req, res, next) => {
   }
 }
 
-export const authenticateSocket = async (socket, next) => {
+export const handleSocketTokenValidation = async (socket, next) => {
   try {
-    const { id, username } = validateUser(socket)
+    const { id, username } = validateSocketUser(socket)
 
     socket.user = { id, username }
 
@@ -30,7 +30,7 @@ export const authenticateSocket = async (socket, next) => {
   }
 }
 
-export const validateUser = (socket) => {
+export const validateSocketUser = (socket) => {
   const { access_token: accessToken } = socket.request.cookies
 
   if (!accessToken) {
