@@ -9,7 +9,8 @@ import { PORT } from '../config.js'
 import { chatRouter } from './routes/routes.js'
 import { MessageModel } from './models/message.js'
 import { UserModel } from './models/user.js'
-import { authenticateSocket, validateUser } from './middlewares/authentication.js'
+import { handleSocketTokenValidation, validateSocketUser } from './middlewares/validate-token.js'
+import { socialAuth } from './middlewares/social-auth.js'
 
 const port = PORT ?? 3000
 const app = express()
@@ -24,10 +25,11 @@ const io = new Server(server, {
 app.use(express.static(path.resolve(process.cwd(), 'public')))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(socialAuth.initialize())
 app.use(cookieParser())
 
 io.engine.use(cookieParser())
-io.use(authenticateSocket)
+io.use(handleSocketTokenValidation)
 
 io.on('connection', async (socket) => {
   console.log('An user has connected')
@@ -41,7 +43,7 @@ io.on('connection', async (socket) => {
   socket.on('chat message', async (message, messageULID) => {
     console.log('++ server -> on chat message : ', message, ' - ', messageULID)
     try {
-      const { id, username } = validateUser(socket)
+      const { id, username } = validateSocketUser(socket)
       const user = { id, username }
 
       const messageId = await MessageModel.add({ userId: user.id, message, createdULID: messageULID })
@@ -66,7 +68,7 @@ io.on('connection', async (socket) => {
       if (!results.length) return
 
       const userIds = [...new Set(results.map(({ user_id: userId }) => userId))]
-      const users = await UserModel.getUsersByIds(userIds)
+      const users = await UserModel.getAllById(userIds)
       const userMap = Object.fromEntries(users.map(user => [user.id, user]))
 
       for (const { created_ulid: createdULID, message, user_id: userId } of results) {

@@ -10,6 +10,9 @@ export const {
   DB_NAME,
   DB_USER,
   DB_PASSWORD,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_CALLBACK_URL,
   NODE_ENV
 } = process.env
 export const JWT_SALT = parseInt(process.env.JWT_SALT, 10)
