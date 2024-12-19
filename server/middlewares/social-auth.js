@@ -9,30 +9,41 @@ passport.use(new GoogleStrategy({
   callbackURL: GOOGLE_CALLBACK_URL
 }, async (accessToken, refreshToken, profile, done) => {
   const result = {
-    password: profile.id,
-    email: profile.emails[0].value,
-    username: profile.displayName
+    username: profile.displayName,
+    email: profile.emails[0]?.value,
+    password: profile.id
   }
   const { username, email, password } = result
 
-  const user = await UserModel.isValid({ username, password })
-  if (!user) {
-    const newUser = await UserModel.create({ input: { username, email, password } })
+  try {
+    const user = await UserModel.isValid({ input: { username, password } })
 
-    return done(null, newUser)
+    return done(null, { username: user.username, password, isOauth: true })
+  } catch (error) {
+    try {
+      if (error.message === 'Invalid username') {
+        const newUser = await UserModel.create({ input: { username, email, password }, isOauth: true })
+
+        return done(null, { username: newUser.username, password, isOauth: true })
+      }
+
+      return done(error, false)
+    } catch (createError) {
+      return done(createError, false)
+    }
   }
-
-  return done(null, user)
 }))
 
 const addUserToBody = (req, res, next) => {
-  if (!req.user) {
-    return res.status(400).json({ error: 'No user found in request' })
-  }
+  if (req.user) {
+    const user = req.user
+    req.body.username = user.username
+    req.body.password = user.password
 
-  const user = req.user
-  req.body.username = user.username
-  req.body.password = user.password
+    req.isOauth = true
+
+    delete req.user
+  }
 
   next()
 }

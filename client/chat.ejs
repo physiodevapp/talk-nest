@@ -216,8 +216,6 @@
         ? insertBeforeItem.previousElementSibling
         : children[children.length - 1];
 
-      console.log('previousItem -> ', previousItem);
-      console.log('userId -> ', userId);
       const isFirstInChain =
         !previousItem || previousItem.dataset.userId !== userId;
 
