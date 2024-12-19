@@ -15,7 +15,7 @@ const connectionString = SQL_URL ?? DEFAULT_CONFIG
 const connection = await mysql.createConnection(connectionString)
 
 export class UserModel {
-  static create = async ({ input }) => {
+  static create = async ({ input, isOauth = false }) => {
     const { username, email, password } = input
 
     try {
@@ -27,9 +27,13 @@ export class UserModel {
       const passwordHashed = await bcrypt.hash(password, JWT_SALT)
 
       await connection.query(`
-          INSERT INTO talknest_users (id, username, email, password)
-          VALUES (UUID_TO_BIN('${uuid}'), ?, ?, ?)
-        `, [username, email, passwordHashed])
+          INSERT INTO talknest_users (id, username, email, password, is_oauth_user)
+          VALUES (UUID_TO_BIN('${uuid}'), ?, ?, ?, ?)
+        `, [username, email, passwordHashed, isOauth])
+
+      const newUser = await this.getById({ id: uuid })
+
+      return newUser
     } catch (error) {
       console.error(error)
 
@@ -104,26 +108,30 @@ export class UserModel {
 
     try {
       const [userResult] = await connection.query(`
-          SELECT username, password, BIN_TO_UUID(id) AS id
+          SELECT username, password, BIN_TO_UUID(id) AS id, is_oauth_user
           FROM talknest_users
           WHERE username = ?;
         `, [username])
       const [user] = userResult
 
-      if (!user) throw new Error('Invalid credentials')
+      if (!user) throw new Error('Invalid username')
 
       const isValid = await bcrypt.compare(password, user.password)
 
-      if (!isValid) throw new Error('Invalid credentials')
+      if (!isValid) throw new Error('Invalid password')
 
       return {
         username: user.username,
-        id: user.id
+        id: user.id,
+        isOauth: !!user.is_oauth_user
       }
     } catch (error) {
       console.error(error)
+      if (['Invalid username', 'Invalid password'].includes(error.message)) {
+        throw new Error(error.message)
+      }
 
-      throw new Error('Error while trying to check the credentials')
+      throw new Error('Error while trying to validate the credentials')
     }
   }
 }

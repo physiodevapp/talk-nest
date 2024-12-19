@@ -24,13 +24,15 @@ export class UserController {
 
   static login = async (req, res) => {
     const { username, password } = req.body
+    const { isOauth } = req
 
     try {
       const user = await UserModel.isValid({
         input: { username, password }
       })
+      const isLoginFlowValid = user?.isOauth === !!isOauth
 
-      if (user) {
+      if (user && isLoginFlowValid) {
         const accessToken = generateAccessToken({
           id: user.id,
           username: user.username
@@ -58,8 +60,13 @@ export class UserController {
       }
     } catch (error) {
       console.log(error)
-
-      res.status(500).render('access', { formType: 'login', error: 'Server error' })
+      if (error.message === 'Invalid username') {
+        res.status(401).render('access', { formType: 'login', error: 'Do not have an account' })
+      } else if (error.message === 'Invalid password') {
+        res.status(401).render('access', { formType: 'login', error: 'Invalid credentials' })
+      } else {
+        res.status(500).render('access', { formType: 'login', error: 'Server error' })
+      }
     }
   }
 
