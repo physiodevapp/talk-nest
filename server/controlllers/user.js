@@ -17,9 +17,14 @@ export class UserController {
   static register = async (req, res) => {
     const { username, email, password } = req.body
 
-    await UserModel.create({ input: { username, email, password } })
+    try {
+      await UserModel.create({ input: { username, email, password } })
 
-    res.redirect('/access?formType=login')
+      res.redirect('/access?formType=login')
+    } catch (error) {
+      console.log(error)
+      res.status(500).render('access', { formType: 'register', error: 'Invalid credentials' })
+    }
   }
 
   static login = async (req, res) => {
