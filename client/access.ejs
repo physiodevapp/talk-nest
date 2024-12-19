@@ -75,9 +75,11 @@
         </div>
 
         <!-- Social Login Buttons -->
-        <button class="w-full bg-white border-gray-300 text-[#5F6368] text-lg py-3 rounded-full hover:shadow-md transition font-semibold flex items-center justify-center sm:text-base sm:py-3">
-          Google <img src="/images/chrome.png" alt="Google" class="w-6 ml-2">
-        </button>
+        <form action="/auth/google" method="GET" class="space-y-4">
+          <button type="submit" class="w-full bg-white border-gray-300 text-[#5F6368] text-lg py-3 rounded-full hover:shadow-md transition font-semibold flex items-center justify-center sm:text-base sm:py-3">
+            Google <img src="/images/chrome.png" alt="Google" class="w-6 ml-2">
+          </button>
+        </form>
       <% } %>
 
       <!-- Links -->
