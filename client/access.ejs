@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Physiodevapp Access</title>
+  <title>TalkNest App</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="icon" href="../images/talkNest_logo_no_bg.png">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="m-0 p-0 overflow-hidden bg-[url('/images/watercolor-background.jpg')] flex items-center justify-center min-h-screen">
+<body class="m-0 p-0 overflow-hidden bg-[url('/images/watercolor_background.jpg')] flex items-center justify-center min-h-screen">
 
   <!-- Main Container -->
   <main class="w-full h-screen bg-white sm:w-[320px] sm:h-[700px] sm:rounded-[40px] sm:border-8 sm:border-gray-900 sm:shadow-lg sm:drop-shadow-[0_35px_25px_rgba(0,0,0,0.25)] relative">
@@ -19,7 +20,7 @@
     <!-- Title Section -->
     <article class="p-6 sm:p-8 flex flex-col justify-center h-full bg-white rounded-[40px]">
       <h2 class="text-center text-4xl sm:text-3xl font-bold text-gray-800 mb-8 sm:mb-6">
-        <% if (formType !== 'forgot') { %><img class="inline-block w-[1.4em]" src="../images/talkNest logo.png"/> TalkNest <% } %>
+        <% if (formType !== 'forgot') { %><img class="inline-block w-[1.4em]" src="../images/talkNest_logo.png"/> TalkNest <% } %>
         <% if (formType === 'forgot') { %> Forgot Password <% } %>
       </h2>
 
