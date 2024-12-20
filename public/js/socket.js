@@ -66,19 +66,16 @@ const connectToSocket = async () => {
   })
 
   socket.on('connect', async () => {
-    console.info('--> client on connect')
     await resendPendingMessages(socket)
   })
 
   socket.on('connect_error', async (error) => {
     if (['Invalid token', 'Token required', 'Token expired'].includes(error.message)) {
-      console.info('--> client on connect_error -> Trying to renew the token...', error.message)
       await handleTokenRefresh()
     }
   })
 
-  socket.on('auth_error', async (error) => {
-    console.info('--> client auth_error -> Trying to renew the token...', error)
+  socket.on('auth_error', async () => {
     socket.disconnect()
 
     await handleTokenRefresh()

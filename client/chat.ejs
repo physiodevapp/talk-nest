@@ -15,10 +15,10 @@
   <script type="module" src="../js/socket.js" defer></script>
   <title>TalkNest App</title>
 </head>
-<body class="bg-[url('/images/watercolor_background.jpg')] flex items-center justify-center min-h-screen">
+<body class="bg-[url('/images/watercolor_background.jpg')] flex items-center justify-center min-h-screen overflow-hidden">
 
   <!-- Main Mobile Container -->
-  <div class="w-full h-screen bg-white sm:w-[320px] sm:h-[700px] sm:rounded-[40px] sm:border-8 sm:border-gray-900 sm:shadow-lg sm:drop-shadow-[0_35px_25px_rgba(0,0,0,0.25)] relative">
+  <main class="w-full h-screen bg-white sm:w-[320px] sm:rounded-[40px] sm:border-8 sm:border-gray-900 sm:shadow-lg sm:drop-shadow-[0_35px_25px_rgba(0,0,0,0.25)] relative">
 
     <!-- Notch -->
     <div class="hidden sm:block absolute top-0 left-1/2 -translate-x-1/2 w-28 h-4 bg-black rounded-b-[20px]"></div>
@@ -46,9 +46,9 @@
     </header>
 
     <!-- Chat Section -->
-    <main class="h-[calc(100%-8rem)] overflow-y-auto py-4 chat">
+    <article class="h-[calc(100%-8rem)] overflow-y-auto py-4 chat">
       <ul id="messages" class="list-none m-0 px-4 overflow-y-auto" data-user='<%- JSON.stringify(currentUser) %>'></ul>
-    </main>
+    </article>
 
     <!-- Chat Input -->
     <form id="chat-form" class="absolute bottom-0 left-0 w-full bg-[#F8F8F8] p-3 flex space-x-2 sm:rounded-b-[30px]">
