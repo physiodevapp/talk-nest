@@ -33,15 +33,12 @@ io.use(handleSocketTokenValidation)
 
 io.on('connection', async (socket) => {
   console.log('An user has connected')
-  // console.log(socket)
 
   socket.on('disconnect', () => {
     console.log('An user has disconnected')
-    // console.log(socket)
   })
 
   socket.on('chat message', async (message, messageULID) => {
-    console.log('++ server -> on chat message : ', message, ' - ', messageULID)
     try {
       const { id, username } = validateSocketUser(socket)
       const user = { id, username }
@@ -50,7 +47,6 @@ io.on('connection', async (socket) => {
 
       io.emit('chat message', message, messageULID, user, messageId)
     } catch (error) {
-      console.error('++ server -> auth_error ? --> ', error.message)
       if (['Invalid token', 'Token required', 'Token expired'].includes(error.message)) {
         socket.emit('auth_error', 'Invalid token')
       } else if (['DB Error: duplicated'].includes(message.error)) {
@@ -59,7 +55,6 @@ io.on('connection', async (socket) => {
     }
   })
 
-  console.log('++ server -> on connect socket recovered ?', socket.recovered, '-> serverOffset: ', socket.handshake.auth.serverOffset)
   if (!socket.recovered) {
     try {
       const messageId = socket.handshake.auth.serverOffset ?? 0
