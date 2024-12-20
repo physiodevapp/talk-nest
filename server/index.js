@@ -5,7 +5,7 @@ import express from 'express'
 import cookieParser from 'cookie-parser'
 import { Server } from 'socket.io'
 
-import { PORT } from '../config.js'
+import { EXPRESS_HOST, PORT } from '../config.js'
 import { chatRouter } from './routes/routes.js'
 import { MessageModel } from './models/message.js'
 import { UserModel } from './models/user.js'
@@ -86,6 +86,6 @@ app.use((req, res, next) => {
   res.status(404).send('Client error')
 })
 
-server.listen(port, '0.0.0.0', () => {
+server.listen(port, EXPRESS_HOST ?? 'localhost', () => {
   console.log(`Server is listening at: http://localhost:${port}`)
 })
