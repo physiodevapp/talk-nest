@@ -15,16 +15,16 @@
   <script type="module" src="../js/socket.js" defer></script>
   <title>TalkNest App</title>
 </head>
-<body class="bg-[url('/images/watercolor_background.jpg')] flex items-center justify-center min-h-screen">
+<body class="bg-[url('/images/watercolor_background.jpg')] flex items-center justify-center min-h-screen overflow-hidden">
 
   <!-- Main Mobile Container -->
-  <main class="w-full h-screen bg-white sm:w-[320px] sm:rounded-[40px] sm:border-8 sm:border-gray-900 sm:shadow-lg sm:drop-shadow-[0_35px_25px_rgba(0,0,0,0.25)] relative">
+  <main class="w-full h-screen bg-white sm:w-[320px] sm:h-[700px] sm:rounded-[40px] sm:border-8 sm:border-gray-900 sm:shadow-lg sm:drop-shadow-[0_35px_25px_rgba(0,0,0,0.25)] flex flex-col">
 
     <!-- Notch -->
     <div class="hidden sm:block absolute top-0 left-1/2 -translate-x-1/2 w-28 h-4 bg-black rounded-b-[20px]"></div>
 
     <!-- Chat Header -->
-    <header class="relative bg-[#FBC02D] text-[#212121] p-4 sm:rounded-t-[30px] flex justify-between items-center">
+    <header class="sticky top-0 z-10 bg-[#FBC02D] text-[#212121] p-4 sm:rounded-t-[30px] flex justify-between items-center">
       <div class="flex items-center space-x-2">
         <div class="rounded-full bg-gray-300 h-8 w-8"></div>
         <h1 class="text-lg font-semibold"><%= currentUser.username %></h1>
@@ -46,13 +46,11 @@
     </header>
 
     <!-- Chat Section -->
-    <article class="h-[calc(100%-8rem)] overflow-y-auto py-4 chat">
-      <ul id="messages" class="list-none m-0 px-4 overflow-y-auto" data-user='<%- JSON.stringify(currentUser) %>'></ul>
-    </article>
-
+    <ul id="messages" class="flex-1 list-none m-0 px-4 pt-4 pb-[6em] overflow-y-auto" data-user='<%- JSON.stringify(currentUser) %>'></ul>
+    
     <!-- Chat Input -->
-    <form id="chat-form" class="absolute bottom-0 left-0 w-full bg-[#F8F8F8] p-3 flex space-x-2 sm:rounded-b-[30px]">
-      <input id="input" type="text" name="message" autocomplete="off" placeholder="Escribe un mensaje"
+    <form id="chat-form" class="sticky bottom-0 z-100 flex w-full bg-[#F8F8F8] p-3 flex space-x-2 sm:rounded-b-[30px]">
+      <input id="input" type="text" name="message" autocomplete="off" placeholder="Type something..."
         class="flex-1 p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#8b45f7] outline-none" />
       <button type="submit" class="bg-[#D6244F] text-white p-2 rounded-full">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -60,8 +58,7 @@
         </svg>
       </button>
     </form>
-
-  </div>
+  </main>
 
 </body>
 
