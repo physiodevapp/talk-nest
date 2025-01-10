@@ -14,6 +14,9 @@ export const {
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
   GOOGLE_CALLBACK_URL,
-  NODE_ENV
+  NODE_ENV,
+  MODERATION_MICROSERVICE_URL
 } = process.env
+
+// Parse JWT_SALT as an integer
 export const JWT_SALT = parseInt(process.env.JWT_SALT, 10)

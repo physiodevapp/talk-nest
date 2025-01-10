@@ -92,14 +92,13 @@ export const addMessageToUI = (message, messageULID, isCurrentUser, isLocal, use
       id="${messageULID}" 
       data-user-id="${userId}" 
       class="${(isCurrentUser && isLocal) ? 'local-message' : 'remote-message'} 
-        relative p-3 rounded-md 
-        text-[#212121]
-        ${isCurrentUser ? 'bg-[#FFF8E1]' : 'bg-[#F5F5F5]'} 
+        message
+        ${isCurrentUser ? 'owned-message' : ''} 
         ${isCurrentUser ? 'mr-[0.2em] ml-[4em]' : 'mr-[4em] ml-[0.2em]'}
         ${isFirstInChain ? 'mt-[1.2em]' : 'mt-[0.4em]'}">
       ${isFirstInChain
             ? `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 ${isCurrentUser ? 'right-0 translate-x-2' : 'left-0 -translate-x-2'}" width="20" height="20" viewBox="0 0 20 20">
-          <path d="${isCurrentUser ? 'M0 0 L0 20 L20 0 Z' : 'M20 20 L20 0 L0 0 Z'}" fill="${isCurrentUser ? '#FFF8E1' : '#F5F5F5'}"></path>
+          <path d="${isCurrentUser ? 'M0 0 L0 20 L20 0 Z' : 'M20 20 L20 0 L0 0 Z'}"></path>
         </svg>`
             : ''}
       <p class="content">${message}</p>
@@ -127,4 +126,14 @@ export const updateMessageInUI = (newMessage, messageULID) => {
 
   item.classList.remove('local-message')
   item.classList.add('remote-message')
+}
+
+export const blockMessageInUI = (messageULID) => {
+  const item = document.getElementById(messageULID)
+
+  if (!item) return
+
+  item.querySelector('.content').textContent = 'Message blocked by the moderator'
+  item.classList.remove('owned-message')
+  item.classList.add('blocked-message')
 }

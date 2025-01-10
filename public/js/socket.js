@@ -1,7 +1,7 @@
 import { io } from 'https://cdn.socket.io/4.8.1/socket.io.esm.min.js'
 
 import { currentUser } from '../../../../../js/globals.js'
-import { addMessageToUI, resetFormAndMessages, updateMessageInUI } from './chat.js'
+import { addMessageToUI, blockMessageInUI, resetFormAndMessages, updateMessageInUI } from './chat.js'
 import { deleteMessage, messageExists, resendPendingMessages } from './local-db.js'
 
 const handleTokenRefresh = async () => {
@@ -91,6 +91,11 @@ const connectToSocket = async () => {
 
       socket.connect()
     }
+  })
+
+  socket.on('moderation_error', async (error) => {
+    blockMessageInUI(error.messageULID)
+    await deleteMessage(error.messageULID)
   })
 }
 
