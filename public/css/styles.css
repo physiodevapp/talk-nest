@@ -34,7 +34,7 @@ body {
   background-color: #f8d7da; 
   fill: #f8d7da;  
   font-style: italic;
-  border: 1px solid #f5c6cb;  
+  border: 0px solid #f5c6cb;  
   border-radius: 4px;
   
   & .content {

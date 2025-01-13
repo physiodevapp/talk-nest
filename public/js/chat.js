@@ -69,7 +69,7 @@ export const resetFormAndMessages = (socket) => {
   messages.replaceChildren()
 }
 
-export const addMessageToUI = (message, messageULID, isCurrentUser, isLocal, userId) => {
+export const addMessageToUI = (message, messageULID, isCurrentUser, isLocal, userId, userName) => {
   let item = document.getElementById(messageULID)
 
   if (item) return
@@ -95,11 +95,15 @@ export const addMessageToUI = (message, messageULID, isCurrentUser, isLocal, use
         message
         ${isCurrentUser ? 'owned-message' : ''} 
         ${isCurrentUser ? 'mr-[0.2em] ml-[4em]' : 'mr-[4em] ml-[0.2em]'}
-        ${isFirstInChain ? 'mt-[1.2em]' : 'mt-[0.4em]'}">
+        ${isFirstInChain ? 'mt-[1.2em]' : 'mt-[0.4em]'}
+        ${!isCurrentUser && isFirstInChain ? 'pt-[0.2em]' : ''}">
       ${isFirstInChain
             ? `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 ${isCurrentUser ? 'right-0 translate-x-2' : 'left-0 -translate-x-2'}" width="20" height="20" viewBox="0 0 20 20">
           <path d="${isCurrentUser ? 'M0 0 L0 20 L20 0 Z' : 'M20 20 L20 0 L0 0 Z'}"></path>
         </svg>`
+            : ''}
+      ${!isCurrentUser && isFirstInChain
+            ? `<p class="username font-bold text-sm mb-1 ${isCurrentUser ? 'text-right' : 'text-left'}">${userName}</p>`
             : ''}
       <p class="content">${message}</p>
     </li>`

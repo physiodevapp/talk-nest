@@ -55,7 +55,7 @@ const connectToSocket = async () => {
     const isMessageRendered = isCurrentUser && isInLocalStore
 
     if (!isMessageRendered) {
-      addMessageToUI(message, messageULID, isCurrentUser, false, user?.id)
+      addMessageToUI(message, messageULID, isCurrentUser, false, user?.id, user?.username)
     } else {
       await deleteMessage(messageULID)
 
