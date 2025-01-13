@@ -72,7 +72,7 @@ io.on('connection', async (socket) => {
     } catch (error) {
       if (['Invalid token', 'Token required', 'Token expired'].includes(error.message)) {
         socket.emit('auth_error', 'Invalid token')
-      } else if (['DB Error: duplicated'].includes(message.error)) {
+      } else if (['DB Error: duplicated'].includes(error.message)) {
         socket.emit('db_error', { message: 'Message duplicated', messageULID })
       }
     }
