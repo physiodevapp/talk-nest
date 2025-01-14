@@ -94,9 +94,10 @@ export const addMessageToUI = (message, messageULID, isCurrentUser, isLocal, use
       class="${(isCurrentUser && isLocal) ? 'local-message' : 'remote-message'} 
         message
         ${isCurrentUser ? 'owned-message' : ''} 
-        ${isCurrentUser ? 'mr-[0.2em] ml-[4em]' : 'mr-[4em] ml-[0.2em]'}
+        ${isCurrentUser ? 'mr-[0.2em] ml-[2em]' : 'mr-[2em] ml-[2.1em]'}
         ${isFirstInChain ? 'mt-[1.2em]' : 'mt-[0.4em]'}
         ${!isCurrentUser && isFirstInChain ? 'pt-[0.2em]' : ''}">
+      ${!isCurrentUser && isFirstInChain ? `<img class="absolute left-0 -translate-x-10 -translate-y-1.5 rounded-full bg-gray-300 h-8 w-8" src="https://api.multiavatar.com/${userName}.svg" alt="" srcset="">` : ''}
       ${isFirstInChain
             ? `<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 ${isCurrentUser ? 'right-0 translate-x-2' : 'left-0 -translate-x-2'}" width="20" height="20" viewBox="0 0 20 20">
           <path d="${isCurrentUser ? 'M0 0 L0 20 L20 0 Z' : 'M20 20 L20 0 L0 0 Z'}"></path>
